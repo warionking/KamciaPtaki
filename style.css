@@ -1,0 +1,828 @@
+/* 1. RESET I USTAWIENIA PODSTAWOWE */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #020205 url('img/tlo-studio.png') no-repeat center center fixed !important;
+    background-size: cover !important;
+    color: #ffffff;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* 2. NASZ WŁASNY, KINOWY EKRAN LOGOWANIA */
+#login-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* Ciemne, półprzezroczyste tło rozmywające studio pod spodem */
+    background: rgba(2, 2, 5, 0.92);
+    backdrop-filter: blur(15px);
+    z-index: 200; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease-out;
+}
+
+.login-box {
+    background: linear-gradient(145deg, #0b0c1b, #050508);
+    padding: 50px 40px;
+    border-radius: 20px;
+    /* Neonowa ramka w kolorze show */
+    border: 2px solid #ff0055;
+    box-shadow: 0 0 50px rgba(255, 0, 85, 0.25), inset 0 0 20px rgba(255, 0, 85, 0.1);
+    text-align: center;
+    max-width: 480px;
+    width: 90%;
+}
+
+.login-box h2 {
+    color: #ffcc00;
+    margin-bottom: 15px;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+}
+
+.login-box p {
+    color: #a2a4c4;
+    margin-bottom: 35px;
+    font-size: 1.05rem;
+    line-height: 1.5;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #2a2a3d;
+    color: #ffffff;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.login-box input:focus {
+    border-color: #00f3ff;
+    background: rgba(0, 243, 255, 0.05);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+}
+
+.login-box input::placeholder {
+    color: #5a5a7a;
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #ff3366, #ff0055);
+    color: white;
+    border: none;
+    padding: 18px 30px;
+    width: 100%;
+    font-size: 1.1rem;
+    font-weight: 900;
+    border-radius: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 0 25px rgba(255, 51, 102, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 40px rgba(255, 51, 102, 0.8);
+}
+
+
+/* 3. PEŁNOEKRANOWE INTRO WIDEO */
+#intro-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 1s ease-out;
+}
+
+#intro-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+#intro-rules-box {
+    position: absolute;
+    text-align: center;
+    z-index: 101;
+}
+
+#intro-rules-box h2 {
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    color: #ffcc00;
+    text-shadow: 0 0 15px #ffcc00;
+    text-transform: uppercase;
+}
+
+#rules-pure-btn {
+    background: linear-gradient(135deg, #00f3ff, #b5179e);
+    color: white;
+    border: none;
+    padding: 20px 50px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#rules-pure-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 45px rgba(181, 23, 158, 0.8);
+}
+
+/* 4. KONTENER GŁÓWNA ARENA */
+.studio-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.85) 100%);
+}
+
+.game-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 40px;
+    gap: 35px;
+}
+
+.stage-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 44%; 
+    background: linear-gradient(180deg, #04040f 0%, #090526 40%, #020106 100%);
+    z-index: 1;
+    box-shadow: inset 0 30px 40px rgba(0,0,0,1);
+    overflow: hidden;
+}
+
+/* ==========================================
+   ODŚWIEŻONY, PROFESJONALNY BOKS TYTUŁOWY
+========================================== */
+.stage-title-box {
+    margin-top: -20px;
+    margin-bottom: 50px; 
+    
+    background: rgba(18, 18, 22, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    padding: 20px 40px;
+    border-radius: 8px;
+    
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(100, 210, 255, 0.1), inset 0 0 10px rgba(100, 210, 255, 0.05);
+    
+    z-index: 100;
+    text-align: center;
+    max-width: 600px;
+    
+    /* NOWOŚĆ: Płynne zanikanie */
+    transition: opacity 0.5s ease;
+}
+
+/* TYTUŁ GŁÓWNY */
+.stage-title-box h1,
+.stage-title-box h2 {
+    color: #ffffff;
+    font-size: 2.2rem; /* Mniejszy, bardziej elegancki */
+    margin: 0 0 12px 0; /* Odstęp od podtytułu */
+    text-transform: uppercase;
+    letter-spacing: 3px; /* Szerokie rozstawienie liter (styl Broadcast) */
+    text-shadow: 0 0 15px currentColor; /* Delikatny glow */
+    font-weight: 700;
+}
+
+/* PODTYTUŁ/INSTRUKCJA (ZNACZNE ZMNIEJSZENIE) */
+.stage-title-box p {
+    color: rgba(255, 255, 255, 0.8); /* Lekko wyblakły, żeby nie krzyczał */
+    font-size: 1.1rem; /* Dużo mniejszy */
+    margin: 0;
+    font-weight: 300; /* Cieńszy krój */
+    letter-spacing: 1px;
+    line-height: 1.5; /* Lepsza czytelność */
+}
+
+.horseshoe-stage {
+    width: 100%;
+    max-width: 1500px;
+    height: 480px; 
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Wyśrodkowanie w pionie */
+    gap: 15px; /* Idealny odstęp dla 7 kabin */
+    position: relative;
+    z-index: 3;
+}
+
+/* 5. MASYWNA KABINA - NAPRAWIONA WERSJA */
+.cabin {
+    width: 150px; 
+    height: 420px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    /* TYLKO TE DWIE RZECZY - Żadnych zbędnych czasów blokujących GSAP */
+    transition: z-index 0.6s, filter 0.6s;
+}
+
+/* Usunięte zepsute ściany 3D */
+.cabin::before, .cabin::after {
+    display: none;
+}
+
+.cabin-top {
+    width: 100%; /* Naprawione z 108% - koniec nachodzenia! */
+    height: 18px;
+    background: #ffffff; 
+    border: 3px solid currentColor;
+    border-radius: 6px 6px 0 0;
+    box-shadow: 0 -5px 15px currentColor;
+    z-index: 4;
+}
+
+.cabin-base {
+    width: 100%; /* Naprawione z 116% - koniec nachodzenia! */
+    height: 24px;
+    background: #ffffff;
+    border: 3px solid currentColor;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8), 0 5px 15px currentColor;
+    z-index: 4;
+}
+
+.cabin-number {
+    position: absolute;
+    top: -45px;
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-shadow: 0 0 15px currentColor;
+}
+
+.cabin-glass {
+    width: 100%;
+    height: 328px; 
+    position: relative;
+    background: linear-gradient(180deg, #ffffff -30%, currentColor 30%, #030308 98%);
+    border-left: 4px solid #121216; 
+    border-right: 4px solid #121216;
+    box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.9);
+    overflow: hidden;
+    z-index: 2;
+}
+
+.cabin-glass video, .cabin-glass img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.cabin-silhouette {
+    z-index: 3;
+    object-fit: contain !important;
+    padding: 25px 10px 10px 10px;
+    mix-blend-mode: multiply; 
+    filter: contrast(200%) blur(3px); 
+    opacity: 0.85;
+}
+
+.cabin-glass.blurred::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, currentColor 45%, rgba(0, 0, 0, 0.3) 100%);
+    z-index: 4; 
+    opacity: 0.65;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+/* WJEŻDŻAJĄCA DŁOŃ / STOPA / NOGI */
+.cabin-glass .cabin-hand {
+    position: absolute;
+    top: 0;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* Zapobiega ucinaniu i rozciąganiu zdjęcia */
+    object-position: center center !important;
+    z-index: 5; 
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+}
+
+.hidden-hand {
+    transform: translateY(100%);
+    opacity: 0;
+}
+
+.hidden-face {
+    display: none;
+}
+
+.cabin-glass img:not(.hidden-face) {
+    display: block;
+    z-index: 6;
+}
+
+/* KONTROLKI */
+.cabin-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 55px;
+    margin-top: 15px;
+}
+
+.play-cabin-btn, .hand-cabin-btn {
+    background: rgba(11, 12, 27, 0.85);
+    border: 2px solid var(--theme-color);
+    color: #ffffff;
+    padding: 8px 18px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 20px;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.2s;
+}
+
+.play-cabin-btn:hover, .hand-cabin-btn:hover {
+    background-color: var(--theme-color) !important; 
+    color: #020205 !important;
+    box-shadow: 0 0 20px var(--theme-color) !important;
+    transform: scale(1.05);
+}
+
+.cabin.viewed-cabin .play-cabin-btn:hover {
+    background: #333 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    transform: none !important;
+    cursor: default;
+}
+
+.elim-cabin-btn {
+    background: rgba(25, 4, 10, 0.9);
+    border: 2px solid #ff0044;
+    color: #ff0044;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-radius: 20px;
+    cursor: pointer;
+    z-index: 5;
+    animation: pulseRedButton 1.4s infinite;
+    transition: all 0.2s;
+}
+
+.elim-cabin-btn:hover {
+    background: #ff0044;
+    color: #ffffff;
+    box-shadow: 0 0 25px #ff0044;
+    transform: scale(1.08);
+}
+
+@keyframes pulseRedButton {
+    0% { box-shadow: 0 0 0 0 rgba(255, 0, 68, 0.5); }
+    70% { box-shadow: 0 0 0 15px rgba(255, 0, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 0, 68, 0); }
+}
+
+.cabin.eliminated {
+    color: #33333b !important; 
+    opacity: 0.5;
+    filter: grayscale(80%);
+}
+.cabin.eliminated .cabin-top, .cabin.eliminated .cabin-base {
+    background: #15151a !important;
+    border-color: #33333b !important;
+    box-shadow: none !important;
+}
+
+.floor-reflection {
+    position: absolute;
+    bottom: -110px;
+    width: 100%;
+    height: 110px;
+    background: linear-gradient(to bottom, currentColor, transparent);
+    opacity: 0.35; 
+    filter: blur(8px); 
+    pointer-events: none;
+    z-index: 1;
+    transform: scaleY(0.6);
+}
+
+/* KOLORY I UKŁAD 7 KABIN (Czysty Łuk) */
+.color-pink { color: #ff1f60; --theme-color: #ff1f60; }
+.color-blue { color: #00f3ff; --theme-color: #00f3ff; }
+.color-green { color: #00ff66; --theme-color: #00ff66; }
+.color-yellow { color: #ffad00; --theme-color: #ffad00; }
+.color-purple { color: #b5179e; --theme-color: #b5179e; }
+.color-orange { color: #ff5e00; --theme-color: #ff5e00; }
+.color-lime { color: #bfff00; --theme-color: #bfff00; }
+
+/* NADANIE SCENIE PERSPEKTYWY 3D */
+.horseshoe-stage {
+    perspective: 1200px;
+    transform-style: preserve-3d;
+}
+
+/* USTAWIENIE KABIN NA ŁUKU (DODATNIA OŚ Z - NAPRAWA KLIKALNOŚCI) */
+#cabin-1 { transform: translateZ(160px) translateX(-90px) rotateY(35deg); z-index: 7; }
+#cabin-2 { transform: translateZ(100px) translateX(-60px) rotateY(20deg); z-index: 6; }
+#cabin-3 { transform: translateZ(50px) translateX(-30px) rotateY(10deg); z-index: 5; }
+#cabin-4 { transform: translateZ(10px) translateX(0px) rotateY(0deg); z-index: 4; }
+#cabin-5 { transform: translateZ(50px) translateX(30px) rotateY(-10deg); z-index: 5; }
+#cabin-6 { transform: translateZ(100px) translateX(60px) rotateY(-20deg); z-index: 6; }
+#cabin-7 { transform: translateZ(160px) translateX(90px) rotateY(-35deg); z-index: 7; }
+
+
+.cabin.zoomed-focus .cabin-glass {
+    box-shadow: 0 0 50px currentColor, inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* Ekstremalne przyciemnienie pozostałych kabin podczas oglądania wideo */
+.horseshoe-stage.dimmed .cabin:not(.zoomed-focus) {
+    opacity: 0.02; /* Prawie całkowita przezroczystość */
+    filter: grayscale(100%) brightness(0.1) blur(6px); /* Maksymalny mrok i większe rozmycie */
+}
+
+/* Całkowite wygaszenie żarówek tła podczas odtwarzania */
+.horseshoe-stage.dimmed .studio-lights {
+    opacity: 0;
+}
+/* 7. ANIMACJA LORDA FARQUAADA (MAKSYMALNIE DO LEWEJ) */
+#farquaad-container {
+    position: fixed;
+    bottom: 0;
+    left: -500px; /* Ukrycie */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* NOWOŚĆ: wyrównanie do lewej krawędzi zamiast do środka */
+    z-index: 201;
+    transition: left 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+#farquaad-container.show-character {
+    left: -30px; /* NOWOŚĆ: dociśnięcie postaci do samego brzegu (możesz dać np. -50px, jeśli obrazek ma pusty margines) */
+}
+
+#farquaad-character {
+    height: 350px;
+    margin-left: -180px; /* Przesuwa samą postać w lewo, pod dymek */
+}
+
+/* DYNAMICZNY DYMEK Z TEKSTEM */
+#farquaad-bubble.dynamic-bubble {
+    background: rgba(10, 10, 15, 0.95);
+    border: 2px solid var(--bubble-color, #ff0055);
+    color: #ffffff;
+    padding: 15px 22px;
+    border-radius: 20px 20px 20px 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    max-width: 280px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 15px var(--bubble-color, #ff0055);
+    opacity: 0;
+    transform: scale(0.5);
+    transform-origin: bottom left;
+    margin-bottom: -10px;
+    margin-left: 150px;
+    transition: border-color 0.4s, box-shadow 0.4s, opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#farquaad-bubble.show-bubble {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Pulsujący kursor w stylu maszyny do pisania */
+.cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: #00f3ff;
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* 📺 EKRAN NETFLIX STYLE */
+#netflix-pause-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000;
+    z-index: 101;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.netflix-content h2 {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 40px;
+    line-height: 1.3;
+}
+
+.netflix-btns {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.netflix-btn {
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.netflix-btn.watch {
+    background-color: #e50914; /* Netflix Red */
+    color: white;
+}
+
+.netflix-btn.watch:hover {
+    background-color: #ff0f1a;
+}
+
+.netflix-btn.close {
+    background-color: #555;
+    color: white;
+}
+
+.netflix-btn.close:hover {
+    background-color: #777;
+}
+
+/* Eleganckie rozświetlenie i neonowy blask przy najechaniu na nieobejrzaną kabinę */
+.cabin:not(.eliminated):not(.viewed-cabin):not(.zoomed-focus):hover .cabin-glass {
+    filter: brightness(1.3) contrast(1.15);
+    box-shadow: inset 0 0 60px currentColor, inset 0 0 20px rgba(0,0,0,0.5);
+    cursor: pointer;
+}
+
+/* Płynne przejście światła dla szkła */
+.cabin-glass {
+    transition: filter 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* Styl dla kabin już obejrzanych - przyciemnienie przycisku/kabiny */
+.cabin.viewed-cabin {
+    filter: grayscale(80%) brightness(0.6);
+}
+
+.cabin.viewed-cabin .play-cabin-btn {
+    background: #333;
+    cursor: default;
+}
+
+.cabin.viewed-cabin .play-cabin-btn::after {
+    content: " (OBEJRZANO)";
+    font-size: 0.7rem;
+}
+
+.login-info {
+    margin-bottom: 30px !important; /* Zwiększ tę wartość, jeśli chcesz jeszcze więcej miejsca */
+}
+
+/* W style.css */
+#stage-title, #stage-desc {
+    transition: opacity 0.5s ease;
+}
+
+/* 8. KINOWY POP-UP ELIMINACYJNY */
+#elimination-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 2, 5, 0.95);
+    z-index: 300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(15px);
+    opacity: 0; 
+}
+
+.elimination-content {
+    width: 90%;
+    max-width: 800px;
+    border: 4px solid #ff0044;
+    box-shadow: 0 0 60px rgba(255, 0, 68, 0.4), inset 0 0 30px rgba(255, 0, 68, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    transform: scale(0.8);
+}
+
+#elimination-video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ==========================================
+   WISZĄCE ŻARÓWKI W TLE
+========================================== */
+.studio-lights {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    transform: translateZ(-80px); 
+    pointer-events: none;
+    transition: opacity 0.5s ease; /* Płynne gaśnięcie i zapalanie */
+}
+
+/* Kształt i blask żarówki */
+.lightbulb {
+    position: absolute;
+    width: 6px;
+    height: 10px;
+    background: #ffe399; /* Jasnożółty rdzeń */
+    border-radius: 50% 50% 40% 40%;
+    box-shadow: 
+        0 0 15px 5px rgba(255, 150, 0, 0.6), /* Ciepły pomarańczowy blask */
+        0 0 35px 15px rgba(255, 100, 0, 0.3); /* Dalsza poświata */
+    animation: flicker 4s infinite alternate ease-in-out;
+}
+
+/* "Sznurki" na których wiszą */
+.lightbulb::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1.5px;
+    height: 120px; /* Zamiast nieskończoności, krótki sznurek zanikający w mroku szczeliny */
+    background: linear-gradient(to top, rgba(255, 200, 100, 0.4), transparent);
+}
+
+/* Animacja delikatnego pulsowania światła */
+@keyframes flicker {
+    0% { opacity: 0.6; transform: scale(0.9); filter: brightness(0.9); }
+    50% { opacity: 1; transform: scale(1.1); filter: brightness(1.2); }
+    100% { opacity: 0.7; transform: scale(0.95); filter: brightness(1); }
+}
+
+/* Rozbicie synchronizacji animacji, żeby mrugały niezależnie od siebie */
+.lightbulb:nth-child(odd) {
+    animation-duration: 3s;
+    animation-delay: 0.5s;
+}
+.lightbulb:nth-child(3n) {
+    animation-duration: 5s;
+    animation-delay: 1.2s;
+}
+.lightbulb:nth-child(4n) {
+    animation-duration: 2.5s;
+    animation-delay: 0.2s;
+}
+.lightbulb:nth-child(5n) {
+    animation-duration: 4s;
+    animation-delay: 0.8s;
+}
+/* ==========================================
+   RUNDA 1: NISKIE I SZEROKIE KABINY W ŁUKU 3D
+========================================== */
+
+/* Zachowujemy oryginalny kinowy łuk (w jednym rzędzie, z perspektywą) */
+.horseshoe-stage.round1-layout {
+    perspective: 1200px !important;
+    transform-style: preserve-3d !important;
+    display: flex !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important; /* Zmniejszamy lukę, bo kabiny są szersze */
+    height: 480px !important;
+}
+
+/* Zmieniamy wyłącznie KSZTAŁT kabin na niskie prostokąty (+10% WIĘKSZE) */
+.horseshoe-stage.round1-layout .cabin {
+    width: 215px !important;  
+    height: 265px !important; 
+}
+
+/* Dostosowanie wysokości szyby do nowego, powiększonego kształtu */
+.horseshoe-stage.round1-layout .cabin-glass {
+    height: 160px !important;
+    background: #ffffff !important; 
+}
+
+/* Zdjęcie stóp idealnie dopasowane od lewej do prawej krawędzi bez ucinania */
+.horseshoe-stage.round1-layout .cabin-glass .cabin-hand {
+    width: 100% !important;
+    height: 100% !important;
+    left: 0 !important;
+    top: 0 !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+}
+
+/* Przesuwamy odbicie lustrzane wyżej, dopasowując do niskiej kabiny */
+.horseshoe-stage.round1-layout .floor-reflection {
+    display: block !important; 
+    bottom: -65px !important;
+    height: 65px !important;
+}
+
+/* Korekta pozycji numerków nad boksami */
+.horseshoe-stage.round1-layout .cabin-number {
+    display: block !important;
+    position: absolute !important;
+    top: -45px !important;
+}
+
+/* Panel przycisków pod boksami */
+.horseshoe-stage.round1-layout .cabin-controls {
+    margin-top: 10px !important;
+    min-height: auto !important;
+}
+
+/* ROZSZERZONY ŁUK 3D: Korekta przesunięć bocznych dla szerszych kabin, by idealnie stały obok siebie */
+.horseshoe-stage.round1-layout #cabin-1 { transform: translateZ(160px) translateX(-120px) rotateY(35deg); }
+.horseshoe-stage.round1-layout #cabin-2 { transform: translateZ(100px) translateX(-75px) rotateY(20deg); }
+.horseshoe-stage.round1-layout #cabin-3 { transform: translateZ(50px) translateX(-35px) rotateY(10deg); }
+.horseshoe-stage.round1-layout #cabin-4 { transform: translateZ(10px) translateX(0px) rotateY(0deg); }
+.horseshoe-stage.round1-layout #cabin-5 { transform: translateZ(50px) translateX(35px) rotateY(-10deg); }
+.horseshoe-stage.round1-layout #cabin-6 { transform: translateZ(100px) translateX(75px) rotateY(-20deg); }
+.horseshoe-stage.round1-layout #cabin-7 { transform: translateZ(160px) translateX(120px) rotateY(-35deg); }
+
+/* ==========================================
+   UKŁAD FINAŁOWY (4 lub mniej kabin)
+========================================== */
+.horseshoe-stage.finale-layout {
+    gap: 50px !important; /* Znacznie zwiększamy odstępy, żeby rozepchać podkowę na boki */
+}
+/* Usuwamy nadpisywanie transformacji, dzięki czemu podkowa 3D zostaje nienaruszona! */
