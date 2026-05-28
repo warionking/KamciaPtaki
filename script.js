@@ -463,6 +463,12 @@ function startRound(nrRundy) {
         v.pause(); 
         v.currentTime = 0; 
     }
+    const dv = document.getElementById('defeat-video');
+    if (dv) { 
+        dv.style.display = 'none'; 
+        dv.pause(); 
+        dv.currentTime = 0; 
+    }
 
     // ================= TASOWANIE KANDYDATÓW =================
     let currentMapping = [...candidatesList]; // Kopiujemy czystą listę
@@ -761,6 +767,13 @@ function triggerEndRoundFarquaad(result) {
                         } else if (result === 'loss') {
                             // Kabiny zniknęły jeszcze przed Lordem, teraz odpalamy tylko muzykę z 15% głośności
                             lossBackgroundMusic.play().catch(e => console.warn(e)); 
+                            
+                            // Wyświetlenie wideo z przegraną w środku kontenera
+                            const dv = document.getElementById('defeat-video');
+                            if (dv) {
+                                dv.style.display = 'block';
+                                dv.play().catch(e => console.warn(e));
+                            }
                         }
 
                         // Po zakończeniu mowy Lorda w finale pojawia się werdykt, a wcześniej następna runda

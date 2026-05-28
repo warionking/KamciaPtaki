@@ -523,6 +523,14 @@ body {
 #farquaad-character {
     height: 350px;
     margin-left: -180px; /* Przesuwa samą postać w lewo, pod dymek */
+    animation: floatFarquaad 4s ease-in-out infinite; /* NOWOŚĆ: dodana animacja lewitacji */
+}
+
+/* NOWOŚĆ: Klatki kluczowe do płynnej lewitacji góra-dół */
+@keyframes floatFarquaad {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
 }
 
 /* DYNAMICZNY DYMEK Z TEKSTEM */
