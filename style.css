@@ -14,6 +14,19 @@ body {
     overflow: hidden;
 }
 
+/* BLOKADA ZAZNACZANIA TEKSTU I ZDJĘĆ */
+body {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+    -webkit-touch-callout: none; /* Blokuje wyskakujące menu po przytrzymaniu palca na telefonie (iOS) */
+}
+
+/* Zapobiega przeciąganiu zdjęć myszką (np. na pulpit) */
+img {
+    pointer-events: none;
+}
+
 /* 2. NASZ WŁASNY, KINOWY EKRAN LOGOWANIA */
 #login-wrapper {
     position: fixed;

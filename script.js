@@ -1,3 +1,24 @@
+// --- ZABEZPIECZENIA PRZED KOPIOWANIEM ---
+
+// 1. Blokada prawego przycisku myszy
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// 2. Blokada skrótów klawiszowych (Kopiowanie, Zapisywanie, Narzędzia developerskie, Odświeżanie)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F5' || // Blokada F5
+       (e.ctrlKey && (e.key === 'r' || e.key === 'R')) || // Blokada Ctrl + R
+       e.key === 'F12' || 
+       (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+       (e.ctrlKey && (e.key === 'U' || e.key === 'C' || e.key === 'S' || e.key === 'P'))) {
+        e.preventDefault();
+    }
+});
+
+// 3. Ostateczna blokada schowka (nawet jak ktoś obejdzie powyższe, skopiuje puste pole)
+document.addEventListener('copy', event => {
+    event.preventDefault();
+});
+
 gsap.registerPlugin(TextPlugin);
 let totalScore = 0;
 let roundScore = 0;
@@ -14,7 +35,25 @@ lossBackgroundMusic.volume = 0.15; // Głośność 15% dla przegranej
 
 function updateScoreDisplay() {
     document.getElementById('current-score').innerText = totalScore;
+    // Zapisujemy aktualny wynik i rundę do pamięci przeglądarki
+    localStorage.setItem('panienkiScore', totalScore);
+    localStorage.setItem('panienkiRound', currentRound);
 }
+
+// Sprawdzanie pamięci przy starcie strony (dodaj to zaraz pod zmiennymi na górze pliku script.js)
+window.addEventListener('load', () => {
+    const savedScore = localStorage.getItem('panienkiScore');
+    const savedRound = localStorage.getItem('panienkiRound');
+    
+    if (savedScore !== null) {
+        totalScore = parseInt(savedScore);
+        document.getElementById('current-score').innerText = totalScore;
+    }
+    if (savedRound !== null) {
+        currentRound = parseInt(savedRound);
+    }
+});
+
 // 0. EFEKTY WIZUALNE EKRANU LOGOWANIA
 let farquaadTriggered = false;
 let farquaadAudio; // Deklarujemy zmienną tutaj
@@ -323,7 +362,7 @@ function focusCabin(id) {
     cabin.querySelector('.cabin-controls').style.opacity = '0';
 
     // --- POWIĘKSZONE WIDEO (Skala z 1.55 na 1.86) ---
-    gsap.to(cabin, { y: -90, scale: 1.86, zIndex: 100, duration: 0.5, ease: "power2.out" });
+    gsap.to(cabin, { y: -90, scale: 1.86, zIndex: 999, duration: 0.5, ease: "power2.out" });
 
     video.onended = function() {
         // Przywracamy przycisk po zakończeniu filmu
@@ -404,6 +443,11 @@ let currentRound = 1;
 function startRound(nrRundy) {
     new Audio('img/button_click.mp3').play().catch(e => console.warn(e));
 
+    // --- POPRAWKA BLOKADY KLIKANIA ---
+    moznaKlikac = true; 
+    document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.pointerEvents = 'auto');
+    // ---------------------------------
+
     currentRound = nrRundy;
     const data = roundConfig[nrRundy];
 
@@ -411,7 +455,7 @@ function startRound(nrRundy) {
     if (nrRundy === 1) stage.classList.add('round1-layout');
     else stage.classList.remove('round1-layout');
 
-    // --- NOWOŚĆ: Sprawdzamy, czy włączyć potężny Układ Finałowy (dla 4 i mniej kabin) ---
+    // --- Sprawdzamy, czy włączyć potężny Układ Finałowy (dla 4 i mniej kabin) ---
     const aktywneKabiny = document.querySelectorAll('.cabin:not(.eliminated)').length;
     if (aktywneKabiny <= 4 && nrRundy > 1) stage.classList.add('finale-layout');
     else stage.classList.remove('finale-layout');
@@ -419,7 +463,7 @@ function startRound(nrRundy) {
     document.getElementById('stage-title').innerText = data.title;
     document.getElementById('stage-desc').innerText = data.desc;
 
-    // Chowamy wszystkie przyciski
+    // Chowamy wszystkie przyciski kolejnych rund
     for(let n=1; n<=12; n++){
         const btn = document.getElementById(`next-round${n}-btn`);
         if (btn) btn.style.display = 'none';
@@ -435,19 +479,19 @@ function startRound(nrRundy) {
     roundScore = 0;
     eliminatedCount = 0;
 
-    // NOWOŚĆ: Przywracamy scenę z kabinami i tytułem (usuwamy twarde ukrycie z Rundy 1)
+    // Przywracamy scenę z kabinami i tytułem (usuwamy twarde ukrycie z poprzedniej rundy)
     document.getElementById('horseshoeStage').style.removeProperty('display');
     document.querySelector('.stage-title-box').style.opacity = '1';
     document.querySelector('.stage-title-box').style.pointerEvents = 'auto';
 
-    // NOWOŚĆ: Przywracamy żarówki na scenie
+    // Przywracamy żarówki na scenie
     const lights = document.querySelector('.studio-lights');
     if (lights) {
         lights.style.display = 'block';
-        setTimeout(() => lights.style.opacity = '1', 50); // Płynne rozjaśnienie
+        setTimeout(() => lights.style.opacity = '1', 50); 
     }
 
-    // NOWOŚĆ: Reset muzyki tła oraz stylów wygranej/porażki
+    // Reset muzyki tła oraz stylów wygranej/porażki
     winBackgroundMusic.pause();
     winBackgroundMusic.currentTime = 0;
     lossBackgroundMusic.pause();
@@ -456,7 +500,7 @@ function startRound(nrRundy) {
     titleBox.classList.remove('loss-border', 'win-border');
     document.querySelectorAll('[id^="next-round"]').forEach(btn => btn.classList.remove('pulse-loss-btn', 'pulse-win-btn'));
 
-    // Ukrywamy wideo w kontenerze
+    // Ukrywamy wideo w kontenerze głównym
     const v = document.getElementById('victory-video');
     if (v) { 
         v.style.display = 'none'; 
@@ -471,25 +515,22 @@ function startRound(nrRundy) {
     }
 
     // ================= TASOWANIE KANDYDATÓW =================
-    let currentMapping = [...candidatesList]; // Kopiujemy czystą listę
+    let currentMapping = [...candidatesList]; 
     
-    // Algorytm Fisher-Yates do losowego wymieszania listy (chyba że to Runda 1 po wstępie, wtedy można je ułożyć standardowo, ale losowanie od razu podbija poziom!)
     for (let i = currentMapping.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [currentMapping[i], currentMapping[j]] = [currentMapping[j], currentMapping[i]];
     }
 
-    // Przywrócenie 7 kabin i przypisanie im nowych, wylosowanych "tożsamości"
+    // Przywrócenie kabin i przypisanie im nowych "tożsamości"
     for (let i = 1; i <= 7; i++) {
         const cabin = document.getElementById(`cabin-${i}`);
         if(cabin) {
-            // Twardy reset stylów po starej rundzie
-            cabin.classList.remove('eliminated', 'winner-cabin'); // NOWOŚĆ: Zdejmujemy blokadę myszki ze zwycięzcy
+            cabin.classList.remove('eliminated', 'winner-cabin'); 
             cabin.style.display = ''; 
             gsap.killTweensOf(cabin);
             gsap.set(cabin, { clearProps: "all" });
 
-            // 1. Zapisujemy wylosowanego kandydata do tej konkretnej kabiny (TO JEST NASZA NAKLEJKA!)
             const candidateName = currentMapping[i - 1]; 
             cabin.dataset.candidate = candidateName;     
 
@@ -498,24 +539,20 @@ function startRound(nrRundy) {
             const actionBtn = document.getElementById(`hand-btn-${i}`);
             const face = document.getElementById(`face-${i}`);
 
-            // Resetujemy wizualia wizytówki
             glass.classList.add('blurred');
             glass.style.background = '';
             glass.style.boxShadow = '';
             document.getElementById(`video-${i}`).style.display = 'none';
             document.getElementById(`play-btn-${i}`).style.display = 'none';
             
-            // 2. Podmieniamy twarz kandydata ukrytą pod wizytówką
             face.classList.add('hidden-face');
             face.src = `img/${candidateFaces[candidateName]}`;
 
-            // 3. Bezbłędne ładowanie zdjęć na zasadzie klocków: [Imię]_[CzęśćCiała].webp
             if (imgPart) {
                 imgPart.classList.add('hidden-hand');
                 imgPart.src = `img/Części_Ciała/${candidateName}_${data.part}.webp`;
             }
 
-            // 4. Konfigurujemy przycisk akcji na dole (Jeśli w nazwie było _Bok to wyświetli tylko ODSŁOŃ NOS)
             if (actionBtn) {
                 const partLabel = data.part.split('_')[0].toUpperCase();
                 actionBtn.innerHTML = `🔍 ODSŁOŃ ${partLabel}`;
@@ -580,86 +617,172 @@ function revealPart(id) {
 // 3. SILNIK "SAPERA" I PUNKTACJA
 // ==========================================
 
+// ==========================================
+// 3. SILNIK "SAPERA" I PUNKTACJA (NOWY - KINOWY)
+// ==========================================
+
 function eliminateCandidate(id) {
+    if (!moznaKlikac) return; // Zabezpieczenie przed klikaniem innych kabin w trakcie filmu
+    
     const cabin = document.getElementById(`cabin-${id}`);
     const elBtn = document.getElementById(`elim-btn-${id}`);
     
-    // Ukrywamy kliknięty przycisk i szarzymy kabinę
+    // Ukrywamy kliknięty przycisk eliminacji
     if (elBtn) elBtn.style.display = 'none';
-    cabin.classList.add('eliminated'); 
 
-    // Dźwięk eliminacji
     new Audio('img/button_click.mp3').play().catch(e => console.warn(e));
 
-    // Wyciągamy informację, kogo przed chwilą wylosowało do tej kabiny
     const candidateInThisCabin = cabin.dataset.candidate;
+    // Obejście dla Marka - tymczasowo ładuje pliki Arka
+    const videoName = candidateInThisCabin === "Marek" ? "Arek" : candidateInThisCabin;
 
-    // LOGIKA SAPERA
     if (candidateInThisCabin === "Robert") { 
-        // BOMBA! Wyrzuciła Roberta
+        // ----------------------------------------------------
+        // BOMBA! Wyrzuciła Roberta (PORAŻKA)
+        // ----------------------------------------------------
+        moznaKlikac = false;
         totalScore -= 6;
         updateScoreDisplay();
         
-        document.getElementById('stage-desc').innerText = "KATASTROFA! Wyrzuciłaś Roberta! Runda zakończona.";
-        
-        // Ukrywamy przyciski przy kabinach
+        document.getElementById('stage-desc').innerText = "KATASTROFA! Wyrzuciłaś Roberta! Runda zakończona. Pozostali kandydaci świętują!";
         document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.display = 'none');
         
-        // NOWOŚĆ: Usuwamy blokujące klasy CSS i fizycznie chowamy kabiny oraz żarówki natychmiast!
-        const stage = document.getElementById('horseshoeStage');
-        stage.classList.remove('round1-layout', 'finale-layout'); 
-        stage.style.setProperty('display', 'none', 'important');
+        // 1. Kabina Roberta "wyparowuje" z ekranu
+        gsap.to(cabin, { 
+            scale: 0, opacity: 0, duration: 0.6, ease: "power2.in", 
+            onComplete: () => {
+                cabin.style.display = 'none';
+                playVictoryVideosSequentially(); // Odpalamy triumf obcych po zniknięciu Roberta
+            }
+        });
         
-        // NOWOŚĆ: Czerwona ramka wokół tekstu pulsuje natychmiast, kontener na środku
-        document.querySelector('.stage-title-box').classList.add('loss-border');
-        
-        // Odpalamy Lorda - LOSS 
-        triggerEndRoundFarquaad('loss');
     } else {
+        // ----------------------------------------------------
         // SUKCES! Wyrzuciła obcego
-        eliminatedCount += 1;
-        totalScore += 1; 
-        updateScoreDisplay(); 
+        // ----------------------------------------------------
+        moznaKlikac = false; // Blokujemy klikanie innych na czas filmu
+        document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.pointerEvents = 'none');
         
-        document.getElementById('stage-desc').innerText = `Dobrze! +1 punkt. Do odstrzału zostało jeszcze ${6 - eliminatedCount} obcych!`;
+        const video = document.getElementById(`video-${id}`);
+        const handImg = document.getElementById(`hand-${id}`);
+        const faceImg = document.getElementById(`face-${id}`);
+        const silhouette = document.getElementById(`silhouette-${id}`);
         
-       if (eliminatedCount === 6) {
-            // IDEALNA RUNDA! Został tylko Robert
-            document.getElementById('stage-desc').innerText = "WSPANIALE! Pozbyłaś się wszystkich ogrów i ocaliłaś narzeczonego!";
+        // Ukrywamy odkrytą część ciała i uruchamiamy wideo z Porażką
+        if (handImg) handImg.classList.add('hidden-hand');
+        if (silhouette) silhouette.style.display = 'none';
+        if (faceImg) faceImg.classList.add('hidden-face');
+        
+        video.src = `img/${videoName}_Przegryw.mp4`;
+        video.style.display = 'block';
+        video.play().catch(e => console.warn(e));
+        
+        // Utrzymujemy powiększenie kabiny na czas odtwarzania wideo (nadpisujemy hover)
+        gsap.killTweensOf(cabin);
+        gsap.to(cabin, { scale: 1.15, y: -25, zIndex: 100, duration: 0.3 });
+        
+        video.onended = () => {
+            // Koniec filmu: ukrywamy wideo, pokazujemy twarz, wyciemniamy i resetujemy skalę
+            video.style.display = 'none';
+            if (faceImg) faceImg.classList.remove('hidden-face');
             
-            document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.display = 'none');
+            cabin.classList.add('eliminated'); 
+            gsap.to(cabin, { scale: 1, y: 0, zIndex: 4, duration: 0.4 });
             
-            // Znajdujemy zwycięską kabinę Roberta i powiększamy ją
-            const winningCabin = document.querySelector('.cabin:not(.eliminated)');
-            if (winningCabin) {
-                winningCabin.classList.add('winner-cabin'); // NOWOŚĆ: Całkowicie wyłączamy reakcję na myszkę!
-                gsap.killTweensOf(winningCabin);
-                gsap.to(winningCabin, { 
-                    scale: 2,         
-                    y: -100,          
-                    zIndex: 200,      
-                    duration: 1.5,    
-                    ease: "elastic.out(1, 0.5)" 
-                });
+            eliminatedCount += 1;
+            totalScore += 1; 
+            updateScoreDisplay(); 
+            
+            document.getElementById('stage-desc').innerText = `Dobrze! +1 punkt. Do odstrzału zostało jeszcze ${6 - eliminatedCount} obcych!`;
+            
+            if (eliminatedCount === 6) {
+                // IDEALNA RUNDA! Został tylko Robert
+                document.getElementById('stage-desc').innerText = "WSPANIALE! Pozbyłaś się wszystkich ogrów i ocaliłaś narzeczonego!";
+                document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.display = 'none');
+                
+                const winningCabin = document.querySelector('.cabin:not(.eliminated)');
+                if (winningCabin) {
+                    winningCabin.classList.add('winner-cabin');
+                    gsap.killTweensOf(winningCabin);
+                    gsap.to(winningCabin, { scale: 2, y: -100, zIndex: 200, duration: 1.5, ease: "elastic.out(1, 0.5)" });
+                }
+                
+                document.querySelector('.stage-title-box').style.opacity = '0';
+                document.querySelector('.stage-title-box').style.pointerEvents = 'none';
+                document.querySelectorAll('.cabin.eliminated').forEach(c => c.style.display = 'none');
+                
+                const lights = document.querySelector('.studio-lights');
+                if (lights) {
+                    lights.style.opacity = '0';
+                    setTimeout(() => lights.style.display = 'none', 500);
+                }
+                
+                triggerEndRoundFarquaad('win');
+            } else {
+                // Runda trwa dalej, odblokowujemy przyciski
+                document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.pointerEvents = 'auto');
+                moznaKlikac = true;
             }
-            
-            // Ukrywamy tytuł na czas triumfu
-            document.querySelector('.stage-title-box').style.opacity = '0';
-            document.querySelector('.stage-title-box').style.pointerEvents = 'none';
-            
-            // Fizycznie ukrywamy wszystkie szare kabiny
-            document.querySelectorAll('.cabin.eliminated').forEach(c => c.style.display = 'none');
-            
-            // NOWOŚĆ: Płynnie gasimy żarówki w tle, żeby nie świeciły za Robertem
-            const lights = document.querySelector('.studio-lights');
-            if (lights) {
-                lights.style.opacity = '0';
-                setTimeout(() => lights.style.display = 'none', 500);
-            }
-            
-            triggerEndRoundFarquaad('win');
-        }
+        };
     }
+}
+
+// Funkcja pomocnicza: sekwencyjne odtwarzanie filmów zwycięstwa pozostałych kandydatów
+function playVictoryVideosSequentially() {
+    // Pobieramy kabiny obcych, którzy nie zostali wyeliminowani (zwycięzcy rundy)
+    const activeCabins = Array.from(document.querySelectorAll('.cabin:not(.eliminated)')).filter(c => c.dataset.candidate !== "Robert");
+    
+    function playNext(index) {
+        if (index >= activeCabins.length) {
+            // Gdy wszystkie filmy się skończą, wołamy Lorda Farquaada
+            const stage = document.getElementById('horseshoeStage');
+            stage.classList.remove('round1-layout', 'finale-layout'); 
+            stage.style.setProperty('display', 'none', 'important');
+            
+            document.querySelector('.stage-title-box').classList.add('loss-border');
+            triggerEndRoundFarquaad('loss');
+            return;
+        }
+        
+        const currentCabin = activeCabins[index];
+        const currentId = currentCabin.id.split('-')[1];
+        const currentCandidate = currentCabin.dataset.candidate;
+        const currentVideoName = currentCandidate === "Marek" ? "Arek" : currentCandidate;
+        
+        const video = document.getElementById(`video-${currentId}`);
+        const handImg = document.getElementById(`hand-${currentId}`);
+        const faceImg = document.getElementById(`face-${currentId}`);
+        const silhouette = document.getElementById(`silhouette-${currentId}`);
+        
+        // Ukrywamy to co w kabinie, szykujemy wideo Wygrywu
+        if (handImg) handImg.classList.add('hidden-hand');
+        if (silhouette) silhouette.style.display = 'none';
+        if (faceImg) faceImg.classList.add('hidden-face');
+        
+        video.src = `img/${currentVideoName}_Wygryw.mp4`;
+        video.style.display = 'block';
+        
+        // Lekko powiększamy wygrywającego kandydata, żeby skupić na nim uwagę
+        gsap.killTweensOf(currentCabin);
+        gsap.to(currentCabin, { scale: 1.25, y: -40, zIndex: 100, duration: 0.5 });
+        
+        video.onended = () => {
+            // Po filmie pokazujemy jego twarz i pomniejszamy, a następnie odpalamy kolejnego z listy
+            video.style.display = 'none';
+            if (faceImg) faceImg.classList.remove('hidden-face');
+            
+            gsap.to(currentCabin, { scale: 1, y: 0, zIndex: 4, duration: 0.4, onComplete: () => {
+                playNext(index + 1);
+            }});
+        };
+        
+        video.play().catch(e => {
+            console.warn(e);
+            playNext(index + 1); // W razie błędu omiń ten filmik i leć dalej
+        });
+    }
+    
+    playNext(0); // Start pętli od pierwszego kandydata z listy
 }
 
 // ==========================================
