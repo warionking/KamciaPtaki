@@ -1,4 +1,20 @@
 gsap.registerPlugin(TextPlugin);
+let totalScore = 0;
+let roundScore = 0;
+let eliminatedCount = 0;
+let roundAudioPlaying = false; // NOWOŚĆ: Flaga blokująca interakcję podczas audio
+// NOWOŚĆ: Dwa osobne pliki muzyczne dla wygranej i porażki
+let winBackgroundMusic = new Audio('img/Muzyka_Tło.mp3');
+winBackgroundMusic.loop = true;
+winBackgroundMusic.volume = 0.3; // Głośność 30% dla wygranej
+
+let lossBackgroundMusic = new Audio('img/Muzyka_Tło_1.mp3');
+lossBackgroundMusic.loop = true;
+lossBackgroundMusic.volume = 0.15; // Głośność 15% dla przegranej
+
+function updateScoreDisplay() {
+    document.getElementById('current-score').innerText = totalScore;
+}
 // 0. EFEKTY WIZUALNE EKRANU LOGOWANIA
 let farquaadTriggered = false;
 let farquaadAudio; // Deklarujemy zmienną tutaj
@@ -42,10 +58,16 @@ function showFarquaad() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Czekamy na pierwsze kliknięcie lub dotknięcie gdziekolwiek na stronie, aby wywołać Lorda
-    ['click', 'touchstart'].forEach(evt => 
-        window.addEventListener(evt, showFarquaad, { once: true })
-    );
+    // PRZYWRÓCONO: Strona startuje od ekranu logowania (koniec trybu testowego)
+    document.getElementById('login-wrapper').style.display = 'flex';
+    document.getElementById('intro-overlay').style.display = 'none';
+    
+    // Ukrywamy całe studio na start
+    document.querySelector('.studio-container').style.visibility = 'hidden';
+
+    // Podpinamy Lorda Farquaada pod pierwsze kliknięcie na stronie logowania
+    window.addEventListener('click', showFarquaad);
+    window.addEventListener('touchstart', showFarquaad);
 });
 
 // 1. OBSŁUGA LOGOWANIA I INTRO
@@ -61,10 +83,12 @@ function startFromLogin() {
     const inputPass = document.getElementById('loginPass').value;
 
     if (inputUser === 'PanienskieKamila' && inputPass === 'PtakiLatajaKluczem') {
-        
-        // --- NOWOŚĆ: Zatrzymujemy audio Lorda Farquaada i resetujemy jego czas ---
-        farquaadAudio.pause();
-        farquaadAudio.currentTime = 0;
+            
+            // Zatrzymujemy audio Lorda Farquaada (Zabezpieczone, żeby nie wywalało błędu!)
+            if (farquaadAudio) {
+                farquaadAudio.pause();
+                farquaadAudio.currentTime = 0;
+            }
 
         // --- NOWOŚĆ: Chowamy postać oraz dymek ---
         const farquaadContainer = document.getElementById('farquaad-container');
@@ -77,6 +101,14 @@ function startFromLogin() {
         loginWrapper.style.opacity = '0';
         setTimeout(() => { 
             loginWrapper.style.display = 'none'; 
+            
+            // NAPRAWA: Wyświetlamy cały kontener intra przed włączeniem wideo!
+            const introOverlay = document.getElementById('intro-overlay');
+            if (introOverlay) {
+                introOverlay.style.display = 'flex';
+                introOverlay.style.opacity = '1';
+            }
+            
             introVideo.style.display = 'block'; 
             introVideo.muted = false;
             introVideo.play();
@@ -185,19 +217,78 @@ function playRulesWithSound() {
 function skipIntro() {
     const overlay = document.getElementById('intro-overlay');
     overlay.style.opacity = '0';
+    
     setTimeout(() => { 
         overlay.style.display = 'none'; 
         
-        // --- NOWOŚĆ: Kinowy wjazd kabin odpala się DOKŁADNIE tutaj! ---
-        gsap.from(".cabin", {
-            duration: 1.2,
-            y: 150,           // Kabiny wjeżdżają z dołu
-            opacity: 0,       // Zaczynają jako całkowicie przezroczyste
-            scale: 0.5,       // Są małe
-            rotationX: -20,   // Lekko odchylone
-            stagger: 0.15,    // Wchodzą falami od lewej do prawej
-            ease: "power3.out"
+        // Odkrywamy całe, pełne studio (tytuły + podłogę)
+        document.querySelector('.studio-container').style.visibility = 'visible';
+        
+        // --- 1. POGASZENIE ŚWIATEŁ I KABIN PRZED AUDIO ---
+        const lights = document.querySelector('.studio-lights');
+        if (lights) lights.style.opacity = '0'; // Ukrywamy żarówki w mroku
+
+        const cabins = document.querySelectorAll('.cabin');
+        cabins.forEach(cabin => {
+            cabin.style.opacity = '0';          // Całkowita niewidoczność
+            cabin.style.pointerEvents = 'none'; // ZABEZPIECZENIE: Wyłącza klikanie i dźwięk myszki!
         });
+
+        // Ukrywamy przyciski "ODTWÓRZ"
+        for (let i = 1; i <= 7; i++) {
+            const btn = document.getElementById(`play-btn-${i}`);
+            if (btn) btn.style.display = 'none';
+        }
+
+        // --- 2. ODTWARZANIE AUDIO LORDA ---
+        const poznajAudio = new Audio('img/Lord_Poznaj_Kandydatow.mp3');
+        poznajAudio.play().catch(e => console.warn(e));
+
+        // --- 3. AKCJA PO ZAKOŃCZENIU AUDIO ---
+        poznajAudio.onended = () => {
+            
+            // Płynne włączenie żarówek w tle
+            if (lights) {
+                gsap.to(lights, {opacity: 1, duration: 1.5, ease: "power2.inOut"});
+            }
+            
+            // Kinowy wjazd kabin! (Używamy fromTo dla pełnej stabilności)
+            gsap.fromTo(".cabin", 
+                {
+                    y: 150,
+                    opacity: 0,
+                    scale: 0.5,
+                    rotationX: -20
+                },
+                {
+                    duration: 1.2,
+                    y: 0,
+                    opacity: 1,
+                    scale: 1,
+                    rotationX: 0,
+                    stagger: 0.15,
+                    ease: "power3.out",
+                    onComplete: function() {
+                        // Zdejmujemy blokadę myszki i czyścimy twarde style GSAP dla WSZYSTKICH kabin
+                        this.targets().forEach(cabin => {
+                            cabin.style.pointerEvents = 'auto';
+                            gsap.set(cabin, { clearProps: "opacity,transform" });
+                        });
+                    }
+                }
+            );
+
+            // Pokazujemy przyciski "ODTWÓRZ" z lekkim opóźnieniem
+            setTimeout(() => {
+                for (let i = 1; i <= 7; i++) {
+                    const btn = document.getElementById(`play-btn-${i}`);
+                    if (btn) {
+                        btn.style.display = 'inline-block';
+                        gsap.fromTo(btn, {opacity: 0, y: 15}, {opacity: 1, y: 0, duration: 0.4});
+                    }
+                }
+            }, 1000); // Przyciski pokazują się, gdy kabiny już stają na miejscach
+        };
         
     }, 1000); 
 }
@@ -227,11 +318,16 @@ function focusCabin(id) {
     if (silhouette) silhouette.style.display = 'none';
     video.style.display = 'block';
     video.play();
+    
+    // Ukrywamy panel z przyciskiem na czas powiększenia (eliminuje pikselozę tekstu)
+    cabin.querySelector('.cabin-controls').style.opacity = '0';
 
-    // --- NOWOŚĆ: Reżyserski najazd kamery (GSAP) - WERSJA MAX ---
-    gsap.to(cabin, { y: -70, scale: 1.55, zIndex: 100, duration: 0.5, ease: "power2.out" });
+    // --- POWIĘKSZONE WIDEO (Skala z 1.55 na 1.86) ---
+    gsap.to(cabin, { y: -90, scale: 1.86, zIndex: 100, duration: 0.5, ease: "power2.out" });
 
     video.onended = function() {
+        // Przywracamy przycisk po zakończeniu filmu
+        cabin.querySelector('.cabin-controls').style.opacity = '1';
         obejrzaneKabiny.add(id);
         cabin.classList.add('viewed-cabin');
         playBtn.innerText = "ODTWORZONO";
@@ -254,7 +350,7 @@ function focusCabin(id) {
 
         if (obejrzaneKabiny.size === 7) {
             document.getElementById('stage-title').innerText = "KANDYDACI POZNANI";
-            document.getElementById('stage-desc').innerText = "Wszyscy kandydaci obejrzani. Czas odkryć ich tajemnice!";
+            document.getElementById('stage-desc').innerText = "Wszyscy kandydaci poznani! Czas na brutalną selekcję. Po takich doznaniach strach pomyśleć, co jeszcze chowają przed światem!";
             document.getElementById('next-round1-btn').style.display = 'inline-block';
 
             // --- NOWOŚĆ: Przywrócenie kolorów i ukrycie przycisków "ODTWORZONO" ---
@@ -269,17 +365,38 @@ function focusCabin(id) {
 }
 
 // ==========================================
-// NOWY UNIWERSALNY SILNIK RUND (1-7)
+// NOWY UNIWERSALNY SILNIK RUND (1-11) I TASOWANIE
+// ==========================================
+
+// ==========================================
+// NOWY UNIWERSALNY SILNIK RUND (1-11) I TASOWANIE
 // ==========================================
 
 const roundConfig = {
-    1: { title: "RUNDA 1: STOPY", desc: "Zgrabne paluszki czy haluksy jak racice krowy domowej? Ściągnij im skarpetki i bezlitośnie wskaż, kto na tych kopytach musi wracać do domu.", audio: "Runda_1_Box.mp3", part: "Stopy", isElim: false },
-    2: { title: "RUNDA 2: NOGI", desc: "Podobno prawdziwa siła drzemie w nogach. Szkoda że u niektórych z nich drzemie co najwyżej chuda gałązka i owłosione kolano. Pokażcie te patyki!", audio: "Lord_Nogi.mp3", part: "Nogi", isElim: true },
-    3: { title: "RUNDA 3: PĘPEK", desc: "Wklęsły jak portfel po weekendzie, czy wypukły jak ego faceta na Tinderze, który trzyma rybę na profilowym? Sprawdzamy, co kryje się w centrum dowodzenia. Pokazujcie pępki!", audio: "Lord_Pępek.mp3", part: "Pępek", isElim: false },
-    4: { title: "RUNDA 4: SUTEK", desc: "Stoją na baczność jak po usłyszeniu pytania 'a ty ile masz wzrostu?', czy są małe i zagubione jak facet w dziale z tamponami? Czas odkryć, co oni tam ukrywają pod koszulką i kogoś bezlitośnie wyeliminować!", audio: "Lord_Sutek.mp3", part: "Sutek", isElim: true },
-    5: { title: "RUNDA 5: ŁOKIEĆ", desc: "Szorstkie jak jego żarty na pierwszej randce, czy gładziutkie od wiecznego leżenia przed Netflixem? Pora na ostateczny test łokcia.", audio: "Lord_Łokieć.mp3", part: "Łokieć", isElim: false },
-    6: { title: "RUNDA 6: BICEPS", desc: "Biceps godny drwala, który sam zbuduje Ci dom, czy ugotowany makaron, który będzie prosił o pomoc przy otwarciu słoika z pesto? Prężymy muły! I patrzymy kto da radę nosić za tobą torby na zakupach.", audio: "Lord_Biceps.mp3", part: "Biceps", isElim: true },
-    7: { title: "RUNDA 7: DŁONIE", desc: "Czas na ulubiony fetysz z TikToka. Są tam te seksowne, żylaste dłonie, czy mięciutkie rączki, które wpadają w panikę przy składaniu szafki z IKEI?", audio: "Lord_DlonieRewers.mp3", part: "Rewers", isElim: false }
+    1: { title: "RUNDA 1: STOPY", desc: "Zgrabne paluszki czy haluksy jak racice krowy domowej? Ściągnij im skarpetki i bezlitośnie wskaż, kto na tych kopytach musi wracać do domu.", audio: "Runda_1_Box.mp3", part: "Stopy" },
+    2: { title: "RUNDA 2: NOGI", desc: "Podobno prawdziwa siła drzemie w nogach. Szkoda że u niektórych z nich drzemie co najwyżej chuda gałązka i owłosione kolano. Pokażcie te patyki!", audio: "Lord_Nogi.mp3", part: "Nogi" },
+    3: { title: "RUNDA 3: PĘPEK", desc: "Wklęsły jak portfel po weekendzie, czy wypukły jak ego faceta na Tinderze, który trzyma rybę na profilowym? Sprawdzamy, co kryje się w centrum dowodzenia. Pokazujcie pępki!", audio: "Lord_Pępek.mp3", part: "Pępek" },
+    4: { title: "RUNDA 4: SUTEK", desc: "Stoją na baczność jak po usłyszeniu pytania ''A ty ile masz wzrostu?'' czy są małe i zagubione jak facet w dziale z tamponami? Czas odkryć, co oni tam ukrywają pod koszulką i kogoś bezlitośnie wyeliminować!", audio: "Lord_Sutek.mp3", part: "Sutek" },
+    5: { title: "RUNDA 5: ŁOKIEĆ", desc: "Szorstkie jak jego żarty na pierwszej randce, czy gładziutkie od wiecznego leżenia przed Netflixem? Pora na ostateczny test łokcia.", audio: "Lord_Łokieć.mp3", part: "Łokieć" },
+    6: { title: "RUNDA 6: BICEPS", desc: "Biceps godny drwala, który sam zbuduje Ci dom, czy ugotowany makaron, który będzie prosił o pomoc przy otwarciu słoika z pesto? Prężymy muły! I patrzymy kto da radę nosić za tobą torby na zakupach.", audio: "Lord_Biceps.mp3", part: "Biceps" },
+    7: { title: "RUNDA 7: DŁONIE (REWERS)", desc: "Czas na ulubiony fetysz z TikToka. Są tam te seksowne, żylaste dłonie, czy mięciutkie rączki, które wpadają w panikę przy składaniu szafki z IKEI?", audio: "Lord_DlonieRewers.mp3", part: "Rewers" },
+    8: { title: "RUNDA 8: DŁONIE (AWERS)", desc: "Odwracamy łapy! Czas na bezlitosną ocenę siły chwytu. Odciski od górskich łańcuchów czy może gładziutkie poduszeczki od scrollowania telefonu. Kto nie utrzymałby w dłoniach smyczy ten dzisiaj wylatuje z gry.", audio: "Lord_Runda_8.mp3", part: "Awers" },
+    9: { title: "RUNDA 9: USTA I ZAROST", desc: "Gęsta szczecina jak u niedźwiedzia po przebudzeniu czy lico które zamarźnie przy pierwszym podmuchu wiatru na grani? Zbliżamy się do twarzy, pora odsłonić paszcze!", audio: "Lord_Runda_9.mp3", part: "Usta" },
+    10: { title: "RUNDA 10: NOS", desc: "Nos stworzony do wyczuwania rześkiego, górskiego powietrza czy może klamka od zakrysti? Odsłaniamy kichawy!", audio: "Lord_Runda_10.mp3", part: "Nos_Bok" },
+    11: { title: "RUNDA 11: UCHO", desc: "Została tylko elita! Zanim spojrzymy im głęboko w oczy, oceńmy ich radary! Słuch wyczulony na najcichszy szelest sarny w lesie czy odstające uchwyty od garnka? Czas nadstawić ucha!", audio: "Lord_Runda_11.mp3", part: "Ucho" },
+    12: { title: "RUNDA FINAŁOWA: OKO", desc: "Ostatnie starcie! Zostały tylko oczy – zwierciadło duszy. To właśnie w to spojrzenie będziesz wpatrywać się każdego ranka do końca życia. Spójrz im głęboko w oczy i podejmij ostateczną decyzję. Kto jest Twoim przeznaczeniem?", audio: "Lord_Runda_12.mp3", part: "Oko" }
+};
+
+// Baza Kandydatów i ich przypisanych "Twarzy" z ekranu Poznaj Kandydatów
+const candidatesList = ["Arek", "Dyzio", "Marek", "Robert", "Tomek", "Programista", "Dominik"];
+const candidateFaces = {
+    "Arek": "1_face.jpg",
+    "Dyzio": "2_face.png",
+    "Marek": "3_face.jpg",
+    "Robert": "4_face.jpg",
+    "Tomek": "5_face.png",
+    "Programista": "6_face.png",
+    "Dominik": "7_face.png"
 };
 
 let currentRound = 1;
@@ -302,47 +419,100 @@ function startRound(nrRundy) {
     document.getElementById('stage-title').innerText = data.title;
     document.getElementById('stage-desc').innerText = data.desc;
 
-    [1, 2, 3, 4, 5, 6, 7].forEach(n => {
+    // Chowamy wszystkie przyciski
+    for(let n=1; n<=12; n++){
         const btn = document.getElementById(`next-round${n}-btn`);
         if (btn) btn.style.display = 'none';
-    });
+    }
+    const verdictBtn = document.getElementById('show-verdict-btn');
+    if (verdictBtn) verdictBtn.style.display = 'none';
 
     const audio = new Audio(`img/${data.audio}`);
+    roundAudioPlaying = true;
     audio.play().catch(e => console.warn("Błąd audio rundy:", e));
 
     odkryteDlonie.clear(); 
+    roundScore = 0;
+    eliminatedCount = 0;
 
+    // NOWOŚĆ: Przywracamy scenę z kabinami i tytułem (usuwamy twarde ukrycie z Rundy 1)
+    document.getElementById('horseshoeStage').style.removeProperty('display');
+    document.querySelector('.stage-title-box').style.opacity = '1';
+    document.querySelector('.stage-title-box').style.pointerEvents = 'auto';
+
+    // NOWOŚĆ: Przywracamy żarówki na scenie
+    const lights = document.querySelector('.studio-lights');
+    if (lights) {
+        lights.style.display = 'block';
+        setTimeout(() => lights.style.opacity = '1', 50); // Płynne rozjaśnienie
+    }
+
+    // NOWOŚĆ: Reset muzyki tła oraz stylów wygranej/porażki
+    winBackgroundMusic.pause();
+    winBackgroundMusic.currentTime = 0;
+    lossBackgroundMusic.pause();
+    lossBackgroundMusic.currentTime = 0;
+    const titleBox = document.querySelector('.stage-title-box');
+    titleBox.classList.remove('loss-border', 'win-border');
+    document.querySelectorAll('[id^="next-round"]').forEach(btn => btn.classList.remove('pulse-loss-btn', 'pulse-win-btn'));
+
+    // Ukrywamy wideo w kontenerze
+    const v = document.getElementById('victory-video');
+    if (v) { 
+        v.style.display = 'none'; 
+        v.pause(); 
+        v.currentTime = 0; 
+    }
+
+    // ================= TASOWANIE KANDYDATÓW =================
+    let currentMapping = [...candidatesList]; // Kopiujemy czystą listę
+    
+    // Algorytm Fisher-Yates do losowego wymieszania listy (chyba że to Runda 1 po wstępie, wtedy można je ułożyć standardowo, ale losowanie od razu podbija poziom!)
+    for (let i = currentMapping.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentMapping[i], currentMapping[j]] = [currentMapping[j], currentMapping[i]];
+    }
+
+    // Przywrócenie 7 kabin i przypisanie im nowych, wylosowanych "tożsamości"
     for (let i = 1; i <= 7; i++) {
         const cabin = document.getElementById(`cabin-${i}`);
-        if (cabin && !cabin.classList.contains('eliminated')) {
+        if(cabin) {
+            // Twardy reset stylów po starej rundzie
+            cabin.classList.remove('eliminated', 'winner-cabin'); // NOWOŚĆ: Zdejmujemy blokadę myszki ze zwycięzcy
+            cabin.style.display = ''; 
+            gsap.killTweensOf(cabin);
+            gsap.set(cabin, { clearProps: "all" });
+
+            // 1. Zapisujemy wylosowanego kandydata do tej konkretnej kabiny (TO JEST NASZA NAKLEJKA!)
+            const candidateName = currentMapping[i - 1]; 
+            cabin.dataset.candidate = candidateName;     
+
             const glass = document.getElementById(`glass-${i}`);
             const imgPart = document.getElementById(`hand-${i}`);
             const actionBtn = document.getElementById(`hand-btn-${i}`);
+            const face = document.getElementById(`face-${i}`);
 
+            // Resetujemy wizualia wizytówki
             glass.classList.add('blurred');
             glass.style.background = '';
             glass.style.boxShadow = '';
-
             document.getElementById(`video-${i}`).style.display = 'none';
-            document.getElementById(`face-${i}`).classList.add('hidden-face');
             document.getElementById(`play-btn-${i}`).style.display = 'none';
+            
+            // 2. Podmieniamy twarz kandydata ukrytą pod wizytówką
+            face.classList.add('hidden-face');
+            face.src = `img/${candidateFaces[candidateName]}`;
 
+            // 3. Bezbłędne ładowanie zdjęć na zasadzie klocków: [Imię]_[CzęśćCiała].webp
             if (imgPart) {
                 imgPart.classList.add('hidden-hand');
-                // Pobieramy czysty atrybut src z HTML (np. img/Części_Ciała/Arek_Stopy.webp)
-                let currentSrc = decodeURIComponent(imgPart.getAttribute('src'));
-                
-                // 1. Zamieniamy starą część ciała na nową
-                let newSrc = currentSrc.replace(/Stopy|Nogi|Pępek|Sutek|Łokieć|Biceps|Dlonie|Rewers/gi, data.part);
-                
-                // 2. Wymuszamy format .webp, niezależnie od tego co było wcześniej
-                newSrc = newSrc.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-                
-                imgPart.src = newSrc;
+                imgPart.src = `img/Części_Ciała/${candidateName}_${data.part}.webp`;
             }
 
+            // 4. Konfigurujemy przycisk akcji na dole (Jeśli w nazwie było _Bok to wyświetli tylko ODSŁOŃ NOS)
             if (actionBtn) {
-                actionBtn.innerHTML = `🔍 ODSŁOŃ ${data.part.toUpperCase()}`;
+                const partLabel = data.part.split('_')[0].toUpperCase();
+                actionBtn.innerHTML = `🔍 ODSŁOŃ ${partLabel}`;
                 actionBtn.setAttribute('onclick', `revealPart(${i})`);
                 actionBtn.style.display = 'none'; 
             }
@@ -350,6 +520,7 @@ function startRound(nrRundy) {
     }
 
     audio.onended = () => {
+        roundAudioPlaying = false;
         for (let i = 1; i <= 7; i++) {
             const cabin = document.getElementById(`cabin-${i}`);
             if (cabin && !cabin.classList.contains('eliminated')) {
@@ -381,148 +552,174 @@ function revealPart(id) {
 
         odkryteDlonie.add(id);
 
-        const aktywneKabiny = document.querySelectorAll('.cabin:not(.eliminated)').length;
+        if (odkryteDlonie.size === 7) {
+            // NOWOŚĆ: Pokazujemy licznik punktów
+            document.getElementById('score-counter').style.display = 'block';
 
-        if (odkryteDlonie.size === aktywneKabiny) {
-            if (data.isElim) {
-                document.getElementById('stage-desc').innerText = "Widziałaś już wszystko. Czas wyeliminować jednego ogra.";
-                for (let i = 1; i <= 7; i++) {
-                    const elBtn = document.getElementById(`elim-btn-${i}`);
-                    const cabin = document.getElementById(`cabin-${i}`);
-                    if (elBtn && cabin && !cabin.classList.contains('eliminated')) {
-                        elBtn.style.display = 'inline-block';
-                    }
+            // Każda runda to teraz Saper!
+            document.getElementById('stage-desc').innerText = "Czas na czystki! Za każdego wyeliminowanego obcego faceta dostajesz +1 pkt. Uważaj! Jeśli skreślisz Roberta, kończysz rundę z karą -6 pkt! Odrzucaj mądrze.";
+            
+            for (let i = 1; i <= 7; i++) {
+                const elBtn = document.getElementById(`elim-btn-${i}`);
+                const cabin = document.getElementById(`cabin-${i}`);
+                if (elBtn && cabin && !cabin.classList.contains('eliminated')) {
+                    elBtn.style.display = 'inline-block';
                 }
-            } else {
-                document.getElementById('stage-desc').innerText = "Widziałaś już wszystko w tej rundzie! Przechodzimy dalej.";
-                const nextBtn = document.getElementById(`next-round${currentRound + 1}-btn`);
-                if (nextBtn) nextBtn.style.display = 'inline-block';
             }
         }
     }
 }
 
 // ==========================================
-// 3. ETAP 3: LOGIKA RUNDY 1 I ELIMINACJI
+// 3. SILNIK "SAPERA" I PUNKTACJA
 // ==========================================
 
-// Sekwencja Eliminacji z GSAP i Pop-upem
 function eliminateCandidate(id) {
-    // 1. Natychmiast ukrywamy przyciski eliminacji, żeby zablokować podwójne kliknięcie
-    document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.display = 'none');
+    const cabin = document.getElementById(`cabin-${id}`);
+    const elBtn = document.getElementById(`elim-btn-${id}`);
+    
+    // Ukrywamy kliknięty przycisk i szarzymy kabinę
+    if (elBtn) elBtn.style.display = 'none';
+    cabin.classList.add('eliminated'); 
 
-    // 2. Włączenie kinowego Pop-upa
-    const popup = document.getElementById('elimination-popup');
-    const elimVideo = document.getElementById('elimination-video');
-    
-    // TYMCZASOWO: Używamy jednego filmu dla każdego uczestnika (do czasu zebrania reszty nagrań)
-    elimVideo.src = 'img/tomek_przegrywa.mp4'; 
-    
-    // Animujemy wejście pop-upa przez GSAP
-    gsap.to(popup, { opacity: 1, display: 'flex', duration: 0.5 });
-    
-    elimVideo.style.display = 'block';
-    elimVideo.play().catch(e => console.warn("Brak pliku wideo pożegnalnego:", e));
+    // Dźwięk eliminacji
+    new Audio('img/button_click.mp3').play().catch(e => console.warn(e));
 
-    // 3. Reakcja po zakończeniu filmu pożegnalnego
-    elimVideo.onended = () => {
-        // Chowamy pop-up
-        gsap.to(popup, { opacity: 0, display: 'none', duration: 0.5 });
+    // Wyciągamy informację, kogo przed chwilą wylosowało do tej kabiny
+    const candidateInThisCabin = cabin.dataset.candidate;
+
+    // LOGIKA SAPERA
+    if (candidateInThisCabin === "Robert") { 
+        // BOMBA! Wyrzuciła Roberta
+        totalScore -= 6;
+        updateScoreDisplay();
         
-        // --- NOWOŚĆ: Zmiana opisu na ekranie po usunięciu kandydata ---
-        document.getElementById('stage-desc').innerText = "Jednego mniej ... ufff. Do odstrzału zostało jeszcze paru więc nie traćmy czasu.";
+        document.getElementById('stage-desc').innerText = "KATASTROFA! Wyrzuciłaś Roberta! Runda zakończona.";
         
-        const cabin = document.getElementById(`cabin-${id}`);
-        cabin.classList.add('eliminated'); // Kabina staje się szara (CSS)
-
-        // 4. ANIMACJA GSAP: Zapadnia i kurczenie się luki
-        gsap.to(cabin, {
-            y: 200, // Kabina spada fizycznie w dół
-            rotationX: -15, // Przechyla się w tył
-            opacity: 0, // Znikanie
-            duration: 1.2,
-            ease: "power2.in",
-            onComplete: () => {
-                // Gdy kabina zjedzie w dół, kurczymy jej miejsce do zera
-                // Dzięki temu Flexbox płynnie "zlepi" pozostałe kabiny ze sobą
-                gsap.to(cabin, {
-                    width: 0,
-                    margin: 0,
-                    padding: 0,
-                    border: 0,
-                    duration: 0.8,
-                    ease: "power2.inOut",
-                    onComplete: () => {
-                        cabin.style.display = 'none';
-                        
-                        // --- NOWOŚĆ: Automatyczne włączenie Układu Finałowego ---
-                        const aktywneKabiny = document.querySelectorAll('.cabin:not(.eliminated)').length;
-                        if (aktywneKabiny <= 4) {
-                            document.getElementById('horseshoeStage').classList.add('finale-layout');
-                        }
-
-                        // ZWIASTUN ETAPU 4: Tu wywołamy Farquaada z jego dynamicznym dymkiem
-                        if (typeof triggerEliminationFarquaad === "function") {
-                            triggerEliminationFarquaad(id);
-                        }
-                    }
+        // Ukrywamy przyciski przy kabinach
+        document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.display = 'none');
+        
+        // NOWOŚĆ: Usuwamy blokujące klasy CSS i fizycznie chowamy kabiny oraz żarówki natychmiast!
+        const stage = document.getElementById('horseshoeStage');
+        stage.classList.remove('round1-layout', 'finale-layout'); 
+        stage.style.setProperty('display', 'none', 'important');
+        
+        // NOWOŚĆ: Czerwona ramka wokół tekstu pulsuje natychmiast, kontener na środku
+        document.querySelector('.stage-title-box').classList.add('loss-border');
+        
+        // Odpalamy Lorda - LOSS 
+        triggerEndRoundFarquaad('loss');
+    } else {
+        // SUKCES! Wyrzuciła obcego
+        eliminatedCount += 1;
+        totalScore += 1; 
+        updateScoreDisplay(); 
+        
+        document.getElementById('stage-desc').innerText = `Dobrze! +1 punkt. Do odstrzału zostało jeszcze ${6 - eliminatedCount} obcych!`;
+        
+       if (eliminatedCount === 6) {
+            // IDEALNA RUNDA! Został tylko Robert
+            document.getElementById('stage-desc').innerText = "WSPANIALE! Pozbyłaś się wszystkich ogrów i ocaliłaś narzeczonego!";
+            
+            document.querySelectorAll('.elim-cabin-btn').forEach(btn => btn.style.display = 'none');
+            
+            // Znajdujemy zwycięską kabinę Roberta i powiększamy ją
+            const winningCabin = document.querySelector('.cabin:not(.eliminated)');
+            if (winningCabin) {
+                winningCabin.classList.add('winner-cabin'); // NOWOŚĆ: Całkowicie wyłączamy reakcję na myszkę!
+                gsap.killTweensOf(winningCabin);
+                gsap.to(winningCabin, { 
+                    scale: 2,         
+                    y: -100,          
+                    zIndex: 200,      
+                    duration: 1.5,    
+                    ease: "elastic.out(1, 0.5)" 
                 });
             }
-        });
-    };
+            
+            // Ukrywamy tytuł na czas triumfu
+            document.querySelector('.stage-title-box').style.opacity = '0';
+            document.querySelector('.stage-title-box').style.pointerEvents = 'none';
+            
+            // Fizycznie ukrywamy wszystkie szare kabiny
+            document.querySelectorAll('.cabin.eliminated').forEach(c => c.style.display = 'none');
+            
+            // NOWOŚĆ: Płynnie gasimy żarówki w tle, żeby nie świeciły za Robertem
+            const lights = document.querySelector('.studio-lights');
+            if (lights) {
+                lights.style.opacity = '0';
+                setTimeout(() => lights.style.display = 'none', 500);
+            }
+            
+            triggerEndRoundFarquaad('win');
+        }
+    }
 }
 
 // ==========================================
-// 4. ETAP 4: ŻYWY LORD FARQUAAD (GSAP)
+// 4. LORD FARQUAAD PODSUMOWUJĄCY RUNDĘ
 // ==========================================
 
-// 4.1. Oddychanie i śledzenie kursora (Idle Animation)
-window.addEventListener('DOMContentLoaded', () => {
-    const character = document.getElementById('farquaad-character');
+const farquaadRoundData = {
+    1: {
+        win: { text: "Cóż za sokoli wzrok! Poznać księcia po samych paluszkach... jestem pod wrażeniem.", audio: "Lord_Robert_Wygrywa_1.mp3", duration: 5 },
+        loss: { text: "Własnego narzeczonego potraktować jak pierwszego lepszego ogra?! Oby na ślubnym kobiercu wzrok służył Ci lepiej!", audio: "Lord_Robert_Odpada_1.mp3", duration: 7 }
+    },
+    2: {
+        win: { text: "Idealny wybór! Te nogi już niedługo zatańczą z Tobą na weselu do białego rana. Żaden inny model nie miał z nimi szans!", audio: "Lord_Robert_Wygrywa_2.mp3", duration: 8 },
+        loss: { text: "Twoje radio nadaje na fali totalnej katastrofy! Wyrzuciłaś Roberta?!", audio: "Lord_Robert_Odpada_2.mp3", duration: 5 }
+    },
+    3: {
+        win: { text: "Wybrałaś pępek równie precyzyjnie, jak trasę na Szyndzielnię w gęstej mgle. Imponujące, choć dla mnie to wciąż tylko miejsce na zbiór kłaczków!", audio: "Lord_Robert_Wygrywa_3.mp3", duration: 8 },
+        loss: { text: "Robert odpada? Gratulacje, właśnie przegrałaś z cudzym pępkiem.", audio: "Lord_Robert_Odpada_3.mp3", duration: 4 }
+    },
+    4: {
+        win: { text: "Te sutki są tak smutne i przerażone, że wyglądają, jakby chciały uciec! Próbuję nastroić to radyjko na męską częstotliwość", audio: "Lord_Robert_Wygrywa_4.mp3", duration: 7 },
+        loss: { text: "Własnego narzeczonego potraktować jak pierwszego lepszego ogra?! Oby na ślubnym kobiercu wzrok służył Ci lepiej!", audio: "Lord_Robert_Odpada_1.mp3", duration: 7 }
+    },
+    5: {
+        win: { text: "Łokieć idealny! Kamila, masz oko do detali! Szukasz tak precyzyjnie, jakbyś odróżniała gatunki mchu na korze drzew!", audio: "Lord_Robert_Wygrywa_5.mp3", duration: 7 },
+        loss: { text: "Ojej, Robert wyleciał? Twoja selekcja jest bardziej chaotyczna niż stado owiec na górskim szlaku. Ale za to jaka rozrywka!", audio: "Lord_Robert_Odpada_5.mp3", duration: 7 }
+    },
+    6: {
+        win: { text: "Biceps Roberta wygrał na tle konkurencji - która miała je chudsze od kijków do Nordic Walking", audio: "Lord_Robert_Wygrywa_6.mp3", duration: 5 },
+        loss: { text: "Wyrzuciłaś Roberta? Jak on się o tym dowie to już nie pomoże Ci z tym cięższym plecakiem w górach", audio: "Lord_Robert_Odpada_6.mp3", duration: 6 }
+    },
+    7: {
+        win: { text: "Nic dziwnego że wygrały łapki Roberta skoro reszta wyglądała jak łapy trolli!", audio: "Lord_Robert_Wygrywa_7.mp3", duration: 4 },
+        loss: { text: "Gratulacje! Jakbyś przy ołtarzu zakładała obrączkę komuś innemu, to nawet byś nie wiedziała", audio: "Lord_Robert_Odpada_7.mp3", duration: 5 }
+    },
+    8: {
+        win: { text: "Bez błędów rozpoznałaś te dłonie, które już niedługo wsuną Ci obrączkę na palec. Jesteś gotowa na ślub!", audio: "Lord_Robert_Wygrywa_8.mp3", duration: 5 },
+        loss: { text: "Ups - te palce nie należą do Twojego narzeczonego. Masz romans?", audio: "Lord_Robert_Odpada_8.mp3", duration: 4 }
+    },
+    9: {
+        win: { text: "Ten zarost znasz na pamięć. Robert może być spokojny bo żaden inny facet nie ma szans na Twojego buziola!", audio: "Lord_Robert_Wygrywa_9.mp3", duration: 6 },
+        loss: { text: "Czyje to wąsy, bo na pewno nie Twojego faceta! Chyba pora na test z całowania na ślepo..", audio: "Lord_Robert_Odpada_9.mp3", duration: 5 }
+    },
+    10: {
+        win: { text: "Masz niesamowitego nosa do swojego faceta! Wywąchałaś go bezbłędnie", audio: "Lord_Robert_Wygrywa_10.mp3", duration: 5 },
+        loss: { text: "Co za kinol, ale niestety nie ten! Twój narzeczony utarłby Ci nosa za tę pomyłkę.", audio: "Lord_Robert_Odpada_10.mp3", duration: 6 }
+    },
+    11: {
+        win: { text: "Słuchasz go jak nikt inny! Idealnie rozpoznałaś to ucho, w które już niedługo będziesz szeptać małżeńskie tajemnice.", audio: "Lord_Robert_Wygrywa_11.mp3", duration: 7 },
+        loss: { text: "Coś kiepsko słuchasz swojego narzeczonego, skoro nie znasz jego uszu!", audio: "Lord_Robert_Odpada_11.mp3", duration: 4 }
+    },
+    12: {
+        win: { text: "Wybór w mgnieniu oka! Patrzysz na niego z taką miłością, że poznałaś to spojrzenie z kilometra. Jesteście dla siebie stworzeni!", audio: "Lord_Robert_Wygrywa_12.mp3", duration: 7 },
+        loss: { text: "Miłość jest ślepa, ale bez przesady! Spojrzałaś w oczy innego faceta i poległaś. Czas kupić mocniejsze okulary przed ślubem!", audio: "Lord_Robert_Odpada_12.mp3", duration: 8 }
+    }
+};
 
-    // Subtelne oddychanie (góra-dół)
-    gsap.to(character, {
-        y: -10, 
-        duration: 1.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-    });
-
-    // Wodzenie wzrokiem (Paralaksa - wychylanie postaci względem kursora myszy)
-    window.addEventListener('mousemove', (e) => {
-        const xAxis = (window.innerWidth / 2 - e.pageX) / 90;
-        const yAxis = (window.innerHeight / 2 - e.pageY) / 90;
-        
-        gsap.to(character, {
-            rotationY: xAxis,
-            rotationX: yAxis,
-            duration: 0.5,
-            ease: "power1.out"
-        });
-    });
-});
-
-function triggerEliminationFarquaad(id) {
+function triggerEndRoundFarquaad(result) {
     const container = document.getElementById('farquaad-container');
     const bubble = document.getElementById('farquaad-bubble');
     const textElement = document.getElementById('farquaad-text');
-
-    const colors = { 1: '#ff1f60', 2: '#00f3ff', 3: '#00ff66', 4: '#ffad00', 5: '#b5179e', 6: '#ff5e00', 7: '#bfff00' };
-    bubble.style.setProperty('--bubble-color', colors[id] || '#ff0044');
-
-    const elimData = {
-        2: { text: "Krzywe jak szable moich rycerzy! Dobrze że się go pozbyłaś, z takimi nogami to on by nawet przed smokiem nie uciekł.", audio: "Lord_Nogi_Eliminacja.mp3", duration: 7 },
-        4: { text: "Te sutki są tak smutne i przerażone, że wyglądają, jakby zaraz same chciały uciec! To jakaś kpina! Próbuję nastroić to radyjko na jakąś męską częstotliwość, a dostaję tylko szum bo ta klatka piersiowa nadaje wyłącznie na fali rozpaczy!", audio: "Lord_Sutek_Eliminacja.mp3", duration: 13 },
-        6: { text: "Biceps? Jaki biceps?! Moja babcia ma więcej krzepy w lewym ramieniu od samego mieszania w kotle! Nie potrzebujemy tu takich cherlaków. Żegnamy!", audio: "Lord_Biceps_Eliminacja.mp3", duration: 10 }
-    };
-
-    const data = elimData[currentRound];
-    if(!data) {
-        console.error("Brak danych Farquaada dla rundy eliminacyjnej nr: " + currentRound);
-        return;
-    }
-
+    
+    // Zabezpieczenie przed brakiem tekstu w nowej rundzie
+    const data = farquaadRoundData[currentRound] ? farquaadRoundData[currentRound][result] : { text: "Brak danych.", audio: "button_click.mp3", duration: 4 };
+    
+    bubble.style.setProperty('--bubble-color', result === 'win' ? '#00ff66' : '#ff0044');
     textElement.innerHTML = ""; 
     container.classList.add('show-character');
 
@@ -541,10 +738,45 @@ function triggerEliminationFarquaad(id) {
                     bubble.classList.remove('show-bubble');
                     setTimeout(() => {
                         container.classList.remove('show-character');
-                        const nextBtn = document.getElementById(`next-round${currentRound + 1}-btn`);
-                        if (nextBtn) nextBtn.style.display = 'inline-block';
+                        
+                        // Zmiana sceny po ZNIKNIĘCIU Lorda
+                        if (result === 'win') {
+                            const stage = document.getElementById('horseshoeStage');
+                            stage.classList.remove('round1-layout', 'finale-layout'); 
+                            stage.style.setProperty('display', 'none', 'important');
+                            
+                            document.querySelector('.stage-title-box').style.opacity = '1';    
+                            document.querySelector('.stage-title-box').style.pointerEvents = 'auto'; 
+                            
+                            // Aktywacja pulsowania i MUZYKI TŁA dla wygranej
+                            document.querySelector('.stage-title-box').classList.add('win-border');
+                            winBackgroundMusic.play().catch(e => console.warn(e));
+
+                            // Wyświetlenie wideo w środku kontenera
+                            const v = document.getElementById('victory-video');
+                            if (v) {
+                                v.style.display = 'block';
+                                v.play().catch(e => console.warn(e));
+                            }
+                        } else if (result === 'loss') {
+                            // Kabiny zniknęły jeszcze przed Lordem, teraz odpalamy tylko muzykę z 15% głośności
+                            lossBackgroundMusic.play().catch(e => console.warn(e)); 
+                        }
+
+                        // Po zakończeniu mowy Lorda w finale pojawia się werdykt, a wcześniej następna runda
+                        if (currentRound === 12) {
+                            const vBtn = document.getElementById('show-verdict-btn');
+                            if (vBtn) vBtn.style.display = 'inline-block';
+                        } else {
+                            const nextBtn = document.getElementById(`next-round${currentRound + 1}-btn`);
+                            if (nextBtn) {
+                                nextBtn.style.display = 'inline-block';
+                                if (result === 'loss') nextBtn.classList.add('pulse-loss-btn');
+                                if (result === 'win') nextBtn.classList.add('pulse-win-btn');
+                            }
+                        }
                     }, 400);
-                }, 3000);
+                }, 3000); 
             }
         });
     }, 800); 
@@ -569,6 +801,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Reakcja na najechanie kursorem
         cabin.addEventListener('mouseenter', () => {
+            if (roundAudioPlaying) return;
             if (!moznaKlikac || cabin.classList.contains('eliminated') || cabin.classList.contains('zoomed-focus') || cabin.classList.contains('viewed-cabin')) return; 
 
             // NAPRAWA: Zatrzymujemy hover TYLKO na ekranie podsumowania wizytówek
@@ -587,6 +820,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Reakcja na zjechanie kursorem
         cabin.addEventListener('mouseleave', () => {
+            if (roundAudioPlaying) return; // Blokada podczas odtwarzania audio
             if (!moznaKlikac || cabin.classList.contains('eliminated') || cabin.classList.contains('zoomed-focus') || cabin.classList.contains('viewed-cabin')) return;
 
             // NAPRAWA: Zatrzymujemy hover TYLKO na ekranie podsumowania wizytówek
@@ -613,3 +847,47 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// ==========================================
+// 6. EKRAN KOŃCOWY I WERDYKT (PO RUNDZIE 12)
+// ==========================================
+
+function showFinalVerdict() {
+    new Audio('img/button_click.mp3').play().catch(e => console.warn(e));
+    
+    // Twarde ukrycie starej sceny i starego kontenera z tekstem
+    document.getElementById('horseshoeStage').style.setProperty('display', 'none', 'important');
+    const oldTitleBox = document.querySelector('.stage-title-box:not(#final-verdict-box)');
+    if (oldTitleBox) oldTitleBox.style.display = 'none';
+    
+    // Zatrzymujemy inne muzyki
+    winBackgroundMusic.pause();
+    lossBackgroundMusic.pause();
+    
+    // Ustawienie odpowiedniego tekstu i koloru z poprawką błędu
+    const verdictBox = document.getElementById('final-verdict-box');
+    const pointsEl = document.getElementById('final-points');
+    const titleEl = document.getElementById('final-title');
+    const descEl = document.getElementById('final-desc');
+    
+    verdictBox.style.display = 'block';
+    pointsEl.innerText = `${totalScore} / 72 PKT`;
+    
+    if (totalScore >= 60) {
+        verdictBox.classList.add('win-border');
+        titleEl.innerText = "EKSPERTKA OD ROBERTA!";
+        titleEl.style.color = "#00ff66";
+        descEl.innerText = "Jesteście jednością. Poznałabyś go nawet z zamkniętymi oczami w tłumie facetów. Ślub może się odbyć bez najmniejszych obaw!";
+        winBackgroundMusic.play().catch(e => console.warn(e));
+    } else if (totalScore >= 30) {
+        titleEl.innerText = "DOBRZE, ALE BEZ SZAŁU!";
+        titleEl.style.color = "#ffcc00";
+        descEl.innerText = "Znacie się nieźle, ale parę razy wzrok Cię zmylił i o mało co nie poślubiłaś obcego ogra. Przed ołtarzem lepiej miej oczy szeroko otwarte!";
+    } else {
+        verdictBox.classList.add('loss-border');
+        titleEl.innerText = "KATASTROFA!";
+        titleEl.style.color = "#ff0044";
+        descEl.innerText = "Zaliczyłaś tyle wpadek, że cudzemu facetowi zafundowałabyś podróż poślubną! Koniecznie załóżcie wizytówki z imionami na weselu, żebyś nie pomyliła męża!";
+        lossBackgroundMusic.play().catch(e => console.warn(e));
+    }
+}

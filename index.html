@@ -49,12 +49,16 @@
     </div>
 
     <div class="studio-container">
+        <!-- DODANY LICZNIK PUNKTÓW -->
+        <div id="score-counter">PUNKTY: <span id="current-score">0</span> / 72</div>
+        
         <main class="game-stage" id="gameStage">
             
             <div class="stage-floor"></div>
          <div class="stage-title-box">
     <h2 id="stage-title">POZNAJ KANDYDATÓW</h2>
-    <p id="stage-desc">Uruchom wizytówkę wideo przyciskiem pod kabiną</p>
+    <p id="stage-desc">Kamcia! Czas na casting! Kliknij odtwórz poniżej, żeby odpalić wideo i sprawdzić, co te gagatki mają do zaoferowania. Do dzieła!</p>
+    <video id="victory-video" src="img/Robert_Zwyciestwo_Rundy.mp4" muted loop style="display: none; width: 100%; max-height: 40vh; margin: 20px 0; border-radius: 8px;"></video>
     <button id="next-round1-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(1)">ROZPOCZNIJ RUNDĘ 1</button>
     <button id="next-round2-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(2)">ROZPOCZNIJ RUNDĘ 2</button>
     <button id="next-round3-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(3)">ROZPOCZNIJ RUNDĘ 3</button>
@@ -62,9 +66,35 @@
     <button id="next-round5-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(5)">ROZPOCZNIJ RUNDĘ 5</button>
     <button id="next-round6-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(6)">ROZPOCZNIJ RUNDĘ 6</button>
     <button id="next-round7-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(7)">ROZPOCZNIJ RUNDĘ 7</button>
-</div>
+    <button id="next-round8-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(8)">ROZPOCZNIJ RUNDĘ 8</button>
+    <button id="next-round9-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(9)">ROZPOCZNIJ RUNDĘ 9</button>
+    <button id="next-round10-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(10)">ROZPOCZNIJ RUNDĘ 10</button>
+    <button id="next-round11-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(11)">ROZPOCZNIJ RUNDĘ 11</button>
+    <button id="next-round12-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(12)">ROZPOCZNIJ WIELKI FINAŁ</button>
+    <button id="show-verdict-btn" class="login-btn pulse-win-btn" style="display: none; margin-top: 25px; font-size: 1.2rem; width: auto; padding: 15px 50px;" onclick="showFinalVerdict()">ZOBACZ WERDYKT KOŃCOWY</button>
+</div> 
 
-            <div class="horseshoe-stage" id="horseshoeStage">
+<div id="final-verdict-box" class="stage-title-box" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 900px; padding: 40px; max-height: 95vh; overflow-y: auto;">
+    <h2 style="font-size: 1.5rem; color: #a2a4c4; margin-bottom: 5px;">TWÓJ WYNIK</h2>
+    <h1 id="final-points" style="font-size: 4rem; color: #00f3ff; text-shadow: 0 0 20px rgba(0,243,255,0.5); margin-bottom: 15px;">0 / 72 PKT</h1>
+    <h2 id="final-title" style="font-size: 2.2rem; margin-bottom: 15px;"></h2>
+    <p id="final-desc" style="font-size: 1.2rem; line-height: 1.6; margin-bottom: 30px;"></p>
+
+    <div class="verdict-levels">
+        <div class="level-card gold">
+            <h3>👑 60 - 72 PKT</h3>
+            <p>Jesteście jednością. Poznałabyś go nawet z zamkniętymi oczami w tłumie facetów. Ślub może się odbyć bez najmniejszych obaw!</p>
+        </div>
+        <div class="level-card silver">
+            <h3>🥈 30 - 59 PKT</h3>
+            <p>Znacie się nieźle, ale parę razy wzrok Cię zmylił i o mało co nie poślubiłaś obcego ogra. Przed ołtarzem lepiej miej oczy szeroko otwarte!</p>
+        </div>
+        <div class="level-card bronze">
+            <h3>🚨 0 - 29 PKT</h3>
+            <p>Zaliczyłaś tyle wpadek, że cudzemu facetowi zafundowałabyś podróż poślubną! Koniecznie załóżcie wizytówki z imionami na weselu, żebyś nie pomyliła męża!</p>
+        </div>
+    </div>
+</div><div class="horseshoe-stage" id="horseshoeStage">
          <div class="studio-lights">
                     <div class="lightbulb" style="top: 15%; left: 10%;"></div>
                     <div class="lightbulb" style="top: 45%; left: 12%;"></div>
@@ -189,7 +219,7 @@
                         <img id="silhouette-6" src="img/silhouette.png" class="cabin-silhouette">
                         <video id="video-6" src="img/6_intro.mp4" style="display: none;"></video>
                         <img id="hand-6" src="img/Części_Ciała/Arek_Stopy.webp" class="cabin-hand hidden-hand">
-                        <img id="face-6" src="img/6_face.jpg" class="hidden-face">
+                        <img id="face-6" src="img/6_face.png" class="hidden-face">
                     </div>
                     <div class="cabin-base"></div>
                     <div class="cabin-controls">
@@ -207,7 +237,7 @@
                         <img id="silhouette-7" src="img/silhouette.png" class="cabin-silhouette">
                         <video id="video-7" src="img/7_intro.mp4" style="display: none;"></video>
                         <img id="hand-7" src="img/Części_Ciała/Robert_Stopy.webp" class="cabin-hand hidden-hand">
-                        <img id="face-7" src="img/7_face.jpg" class="hidden-face">
+                        <img id="face-7" src="img/7_face.png" class="hidden-face">
                     </div>
                     <div class="cabin-base"></div>
                     <div class="cabin-controls">
