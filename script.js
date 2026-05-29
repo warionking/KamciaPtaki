@@ -219,7 +219,7 @@ function triggerFarquaadNetflix() {
                 if (bubble) bubble.classList.add('show-bubble');
                 gsap.to(textElement, {
                     text: "Przerwa na ratowanie jakiegoś jeża czy po prostu próbujecie dojść do siebie? Bardzo szlachetnie, ale tu na ekranie wciąż czeka stado bestii do odstrzału! Wracamy do gry!",
-                    duration: 5.5, 
+                    duration: 7.5, 
                     ease: "none"
                 });
             }, 1000);
@@ -361,8 +361,16 @@ function focusCabin(id) {
     // Ukrywamy panel z przyciskiem na czas powiększenia (eliminuje pikselozę tekstu)
     cabin.querySelector('.cabin-controls').style.opacity = '0';
 
-    // --- POWIĘKSZONE WIDEO (Skala z 1.55 na 1.86) ---
-    gsap.to(cabin, { y: -90, scale: 1.86, zIndex: 999, duration: 0.5, ease: "power2.out" });
+    // --- POWIĘKSZONE WIDEO - PROSTO DO EKRANU ---
+    gsap.to(cabin, { 
+        y: -90, 
+        scale: 1.86, 
+        rotationY: 0, // Prostuje kabinę względem widza!
+        z: 0,         // Wyciąga wideo z tła 3D
+        zIndex: 999, 
+        duration: 0.5, 
+        ease: "power2.out" 
+    });
 
     video.onended = function() {
         // Przywracamy przycisk po zakończeniu filmu
@@ -378,30 +386,46 @@ function focusCabin(id) {
         document.querySelector('.stage-title-box').style.opacity = '1'; /* Przywraca tytuł */
         moznaKlikac = true;
         
-        // --- NOWOŚĆ: Powrót kabiny na swoje miejsce w łuku (GSAP) ---
-        let originY = 0, originScale = 1, originZ = 6;
-        if (id === 1 || id === 7) { originY = 40; originScale = 0.9; originZ = 5; }
-        else if (id === 2 || id === 6) { originY = 20; originScale = 0.95; originZ = 6; }
-        else if (id === 3 || id === 5) { originY = 5; originScale = 1.0; originZ = 7; }
-        else if (id === 4) { originY = -5; originScale = 1.05; originZ = 8; }
+        // --- Powrót kabiny na swoje miejsce w łuku i przywrócenie rotacji 3D ---
+        let originY = 0, originScale = 1, originZ = 6, rotY = 0, tz = 0;
+        
+        if (id === 1) { originY = 40; originScale = 0.9; originZ = 5; rotY = 35; tz = 160; }
+        else if (id === 2) { originY = 20; originScale = 0.95; originZ = 6; rotY = 20; tz = 100; }
+        else if (id === 3) { originY = 5; originScale = 1.0; originZ = 7; rotY = 10; tz = 50; }
+        else if (id === 4) { originY = -5; originScale = 1.05; originZ = 8; rotY = 0; tz = 10; }
+        else if (id === 5) { originY = 5; originScale = 1.0; originZ = 7; rotY = -10; tz = 50; }
+        else if (id === 6) { originY = 20; originScale = 0.95; originZ = 6; rotY = -20; tz = 100; }
+        else if (id === 7) { originY = 40; originScale = 0.9; originZ = 5; rotY = -35; tz = 160; }
 
-        gsap.to(cabin, { y: originY, scale: originScale, zIndex: originZ, duration: 0.5, ease: "power2.out" });
+        gsap.to(cabin, { 
+            y: originY, 
+            scale: originScale, 
+            rotationY: rotY,
+            z: tz,
+            zIndex: originZ, 
+            duration: 0.5, 
+            ease: "power2.out",
+            onComplete: () => {
+                // Całkowicie oddajemy kontrolę z powrotem do pliku CSS
+                gsap.set(cabin, { clearProps: "transform" });
 
-        if (obejrzaneKabiny.size === 7) {
-            document.getElementById('stage-title').innerText = "KANDYDACI POZNANI";
-            document.getElementById('stage-desc').innerText = "Wszyscy kandydaci poznani! Czas na brutalną selekcję. Po takich doznaniach strach pomyśleć, co jeszcze chowają przed światem!";
-            document.getElementById('next-round1-btn').style.display = 'inline-block';
-
-            // --- NOWOŚĆ: Przywrócenie kolorów i ukrycie przycisków "ODTWORZONO" ---
-            for (let i = 1; i <= 7; i++) {
-                const c = document.getElementById(`cabin-${i}`);
-                const btn = document.getElementById(`play-btn-${i}`);
-                if (c) c.classList.remove('viewed-cabin'); // Usuwamy szary filtr
-                if (btn) btn.style.display = 'none';        // Ukrywamy przycisk całkowicie
+                // --- NOWOŚĆ: SPRAWDZENIE CZY TO BYŁ OSTATNI KANDYDAT ---
+                if (obejrzaneKabiny.size === 7) {
+                    // Zmieniamy teksty w głównym boksie
+                    document.getElementById('stage-title').innerText = "KANDYDACI POZNANI";
+                    document.getElementById('stage-desc').innerText = "Wszyscy panowie zaprezentowali swoje wdzięki. Czas wyciągnąć skalpel i rozpocząć ostre cięcia!";
+                    
+                    // Pokazujemy przycisk przejścia do Rundy 1 z efektem pulsowania
+                    const startBtn = document.getElementById('next-round1-btn');
+                    if (startBtn) {
+                        startBtn.style.display = 'inline-block';
+                        startBtn.classList.add('pulse-login-btn');
+                    }
+                }
             }
-        }
-    };
-}
+        });
+    }; // To zamyka zdarzenie video.onended
+} // Zamyka całą funkcję focusCabin
 
 // ==========================================
 // NOWY UNIWERSALNY SILNIK RUND (1-11) I TASOWANIE
@@ -526,7 +550,8 @@ function startRound(nrRundy) {
     for (let i = 1; i <= 7; i++) {
         const cabin = document.getElementById(`cabin-${i}`);
         if(cabin) {
-            cabin.classList.remove('eliminated', 'winner-cabin'); 
+            // Usuwamy WSZYSTKIE stare stany (w tym wyciemnienie viewed-cabin)
+            cabin.classList.remove('eliminated', 'winner-cabin', 'viewed-cabin', 'zoomed-focus'); 
             cabin.style.display = ''; 
             gsap.killTweensOf(cabin);
             gsap.set(cabin, { clearProps: "all" });
