@@ -8,6 +8,23 @@
 </head>
 <body>
 
+<div id="preloader-screen">
+        <div class="cam-overlay">
+            <div class="rec-indicator"><span class="rec-dot"></span> REC</div>
+            <div class="cam-crosshair top-left"></div>
+            <div class="cam-crosshair top-right"></div>
+            <div class="cam-crosshair bottom-left"></div>
+            <div class="cam-crosshair bottom-right"></div>
+        </div>
+        <div class="preloader-content">
+            <h2 id="preloader-text">NAWIĄZYWANIE BEZPIECZNEGO POŁĄCZENIA...</h2>
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="progress-text">0%</div>
+        </div>
+    </div>
+
     <div id="login-wrapper">
         
       <div class="login-box">
@@ -15,11 +32,6 @@
     
     <p><b>Wpisz dane z koperty, aby autoryzować transmisję.</b></p>
     
- <p class="login-info" style="font-size: 0.85em; color: #888; margin-top: 15px;">
-    Tymczasowe dane - tylko dla testu:<br>
-    login: PanienskieKamila<br>
-    hasło: PtakiLatajaKluczem
-</p>
     
     <form onsubmit="event.preventDefault(); startFromLogin();">
         <input type="text" id="loginUser" placeholder="Login" required autocomplete="off">
@@ -72,6 +84,7 @@
     <button id="next-round10-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(10)">ROZPOCZNIJ RUNDĘ 10</button>
     <button id="next-round11-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(11)">ROZPOCZNIJ RUNDĘ 11</button>
     <button id="next-round12-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(12)">ROZPOCZNIJ WIELKI FINAŁ</button>
+    <button id="next-round13-btn" class="login-btn" style="display: none; margin-top: 25px; font-size: 1rem; width: auto; padding: 12px 40px;" onclick="startRound(13)">ROZPOCZNIJ RUNDĘ BONUSOWĄ 🔞</button>
     <button id="show-verdict-btn" class="login-btn pulse-win-btn" style="display: none; margin-top: 25px; font-size: 1.2rem; width: auto; padding: 15px 50px;" onclick="showFinalVerdict()">ZOBACZ WERDYKT KOŃCOWY</button>
 </div> 
 
@@ -97,34 +110,58 @@
     </div>
 </div><div class="horseshoe-stage" id="horseshoeStage">
          <div class="studio-lights">
-                    <div class="lightbulb" style="top: 15%; left: 10%;"></div>
-                    <div class="lightbulb" style="top: 45%; left: 12%;"></div>
-                    <div class="lightbulb" style="top: 75%; left: 13%;"></div>
-                    
-                    <div class="lightbulb" style="top: 25%; left: 27%;"></div>
-                    <div class="lightbulb" style="top: 55%; left: 28.5%;"></div>
-                    <div class="lightbulb" style="top: 85%; left: 28%;"></div>
-                    
-                    <div class="lightbulb" style="top: 15%; left: 42%;"></div>
-                    <div class="lightbulb" style="top: 35%; left: 43.5%;"></div>
-                    <div class="lightbulb" style="top: 65%; left: 42.5%;"></div>
-                    <div class="lightbulb" style="top: 90%; left: 44%;"></div>
-                    
-                    <div class="lightbulb" style="top: 25%; left: 56%;"></div>
-                    <div class="lightbulb" style="top: 45%; left: 57.5%;"></div>
-                    <div class="lightbulb" style="top: 70%; left: 56.5%;"></div>
-                    <div class="lightbulb" style="top: 95%; left: 58%;"></div>
-                    
-                    <div class="lightbulb" style="top: 25%; left: 71.5%;"></div>
-                    <div class="lightbulb" style="top: 50%; left: 73%;"></div>
-                    <div class="lightbulb" style="top: 80%; left: 72%;"></div>
-                    
-                    <div class="lightbulb" style="top: 30%; left: 89%;"></div>
-                    <div class="lightbulb" style="top: 60%; left: 90%;"></div>
-                    <div class="lightbulb" style="top: 85%; left: 91%;"></div>
+                    <!-- Przerwa 1 (Między Kabiną 1 a 2) -->
+                    <div class="light-pivot">
+                        <div class="light-column">
+                            <div class="lightbulb" style="top: 25%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 50%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 75%; left: 50%; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
+                    <!-- Przerwa 2 (Między Kabiną 2 a 3) -->
+                    <div class="light-pivot">
+                        <div class="light-column">
+                            <div class="lightbulb" style="top: 30%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 55%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 80%; left: 50%; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
+                    <!-- Przerwa 3 (Między Kabiną 3 a 4) -->
+                    <div class="light-pivot">
+                        <div class="light-column">
+                            <div class="lightbulb" style="top: 25%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 50%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 75%; left: 50%; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
+                    <!-- Przerwa 4 (Między Kabiną 4 a 5) -->
+                    <div class="light-pivot">
+                        <div class="light-column">
+                            <div class="lightbulb" style="top: 30%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 55%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 80%; left: 50%; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
+                    <!-- Przerwa 5 (Między Kabiną 5 a 6) -->
+                    <div class="light-pivot">
+                        <div class="light-column">
+                            <div class="lightbulb" style="top: 25%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 50%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 75%; left: 50%; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
+                    <!-- Przerwa 6 (Między Kabiną 6 a 7) -->
+                    <div class="light-pivot">
+                        <div class="light-column">
+                            <div class="lightbulb" style="top: 30%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 55%; left: 50%; transform: translateX(-50%);"></div>
+                            <div class="lightbulb" style="top: 80%; left: 50%; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="cabin color-pink" id="cabin-1">
+                <div class="pivot" id="pivot-1">
+                 <div class="cabin color-pink" id="cabin-1">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">1</div>
                     <div class="cabin-glass blurred" id="glass-1">
@@ -140,8 +177,10 @@
                         <button id="elim-btn-1" class="elim-cabin-btn" onclick="eliminateCandidate(1)" style="display: none;">❌ ELIMINUJ</button>
                     </div>
                     <div class="floor-reflection"></div>
+                 </div>
                 </div>
 
+                <div class="pivot" id="pivot-2">
                 <div class="cabin color-blue" id="cabin-2">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">2</div>
@@ -159,7 +198,9 @@
                     </div>
                     <div class="floor-reflection"></div>
                 </div>
-
+                </div>
+            
+                <div class="pivot" id="pivot-3">
                 <div class="cabin color-green" id="cabin-3">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">3</div>
@@ -177,15 +218,17 @@
                     </div>
                     <div class="floor-reflection"></div>
                 </div>
+                </div>
 
+                <div class="pivot" id="pivot-4">
                 <div class="cabin color-yellow" id="cabin-4">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">4</div>
                     <div class="cabin-glass blurred" id="glass-4">
                         <img id="silhouette-4" src="img/silhouette.png" class="cabin-silhouette">
-                        <video id="video-4" src="img/4_intro.mp4" style="display: none;"></video>
-                        <img id="hand-4" src="img/Części_Ciała/Robert_Stopy.webp" class="cabin-hand hidden-hand">
-                        <img id="face-4" src="img/4_face.jpg" class="hidden-face">
+                        <video id="video-4" src="img/7_intro.mp4" style="display: none;"></video>
+                        <img id="hand-4" src="img/Części_Ciała/Dominik_Stopy.webp" class="cabin-hand hidden-hand">
+                        <img id="face-4" src="img/7_face.png" class="hidden-face">
                     </div>
                     <div class="cabin-base"></div>
                     <div class="cabin-controls">
@@ -195,7 +238,9 @@
                     </div>
                     <div class="floor-reflection"></div>
                 </div>
+                </div>
 
+                <div class="pivot" id="pivot-5">
                 <div class="cabin color-purple" id="cabin-5">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">5</div>
@@ -213,7 +258,10 @@
                     </div>
                     <div class="floor-reflection"></div>
                 </div>
-<div class="cabin color-orange" id="cabin-6">
+                </div>
+
+                <div class="pivot" id="pivot-6">
+                <div class="cabin color-orange" id="cabin-6">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">6</div>
                     <div class="cabin-glass blurred" id="glass-6">
@@ -230,15 +278,17 @@
 </div>
                     <div class="floor-reflection"></div>
                 </div>
+                </div>
 
+                <div class="pivot" id="pivot-7">
                 <div class="cabin color-lime" id="cabin-7">
                     <div class="cabin-top"></div>
                     <div class="cabin-number">7</div>
                     <div class="cabin-glass blurred" id="glass-7">
                         <img id="silhouette-7" src="img/silhouette.png" class="cabin-silhouette">
-                        <video id="video-7" src="img/7_intro.mp4" style="display: none;"></video>
+                        <video id="video-7" src="img/4_intro.mp4" style="display: none;"></video>
                         <img id="hand-7" src="img/Części_Ciała/Robert_Stopy.webp" class="cabin-hand hidden-hand">
-                        <img id="face-7" src="img/7_face.png" class="hidden-face">
+                        <img id="face-7" src="img/4_face.jpg" class="hidden-face">
                     </div>
                     <div class="cabin-base"></div>
                     <div class="cabin-controls">
@@ -247,6 +297,7 @@
     <button id="elim-btn-7" class="elim-cabin-btn" onclick="eliminateCandidate(7)" style="display: none;">❌ ELIMINUJ</button>
 </div>
                     <div class="floor-reflection"></div>
+                </div>
                 </div>
             </div>
         </main>
@@ -257,6 +308,8 @@
         </div>
         <img src="img/lord_farquaad.png" id="farquaad-character" alt="Lord Farquaad">
     </div>
+
+    <button id="skip-video-btn" class="login-btn" style="display: none; position: fixed; bottom: 30px; right: 30px; z-index: 9999; width: auto; padding: 15px 30px; font-size: 1.2rem; background: linear-gradient(135deg, #00f3ff, #0055ff); box-shadow: 0 0 20px rgba(0,243,255,0.5);" onclick="skipCurrentVideo()">⏭ POMIŃ WIDEO</button>
 
    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
