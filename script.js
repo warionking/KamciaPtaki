@@ -543,7 +543,7 @@ function focusCabin(id) {
                 // --- SPRAWDZENIE CZY TO BYŁ OSTATNI KANDYDAT ---
                 if (obejrzaneKabiny.size === 7) {
                     document.getElementById('stage-title').innerText = "KANDYDACI POZNANI";
-                    document.getElementById('stage-desc').innerText = "Wszyscy panowie zaprezentowali swoje wdzięki. Czas wyciągnąć skalpel i rozpocząć ostre cięcia!";
+                    document.getElementById('stage-desc').innerText = "Karty odkryte! Zwierzyna zapędzona w róg. Pora przeładować broń i rozpocząć wielki odstrzał obcych ogrów. Wybieraj mądrze, celuj celnie i błagam... nie ustrzel swojego Roberta!";
                     
                     const startBtn = document.getElementById('next-round1-btn');
                     if (startBtn) {
