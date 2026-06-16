@@ -781,7 +781,7 @@ function revealPart(id) {
         // Od razu pokazujemy przyciski eliminacji, gdy wszystko odkryte
         if (odkryteDlonie.size === 7) {
             document.getElementById('score-counter').style.display = 'block';
-            document.getElementById('stage-desc').innerText = "Czas na czystki! Za każdego wyeliminowanego obcego faceta dostajesz +1 pkt. Uważaj! Jeśli skreślisz Roberta, kończysz rundę z karą -6 pkt! Odrzucaj mądrze.";
+            document.getElementById('stage-desc').innerText = "Czas na czystki! Za każdego wyeliminowanego obcego ogra dostajesz +1 pkt. Uważaj! Jeśli skreślisz Roberta, kończysz rundę z karą -6 pkt! Odrzucaj mądrze.";
             
             for (let i = 1; i <= 7; i++) {
                 const elBtn = document.getElementById(`elim-btn-${i}`);
@@ -829,6 +829,10 @@ function eliminateCandidate(id) {
         // Naliczaj karę punktową tylko, jeśli to NIE JEST runda 13
         if (currentRound !== 13) {
             totalScore -= 6;
+            // NOWOŚĆ: Zabezpieczenie przed ujemnymi punktami. Jeśli wynik spadnie poniżej 0, ustawiamy twarde 0.
+            if (totalScore < 0) {
+                totalScore = 0;
+            }
             updateScoreDisplay();
             document.getElementById('stage-desc').innerText = "KATASTROFA! Wyrzuciłaś Roberta! Runda zakończona. Pozostali kandydaci świętują!";
         } else {
